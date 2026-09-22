@@ -1,0 +1,142 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --sg-font-scale: 100%;
+  --sg-galaxy-intensity: 70%;
+  --sg-galaxy-enabled: 1;
+}
+
+@layer base {
+  html {
+    font-size: var(--sg-font-scale);
+  }
+  body {
+    background-color: #030712;
+    color: #f8fafc;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+}
+
+/* THEME VARIANTS — space themes — data-theme="dark" (default) / "dim" / "void" / "nebula" / "ocean" / "ember" / "aurora" — interactive via Settings */
+[data-theme="dim"] body {
+  background-color: #020617;
+}
+[data-theme="dim"] .clean-card {
+  background-color: rgba(6, 12, 24, 0.88);
+  border-color: rgba(56, 189, 248, 0.10);
+}
+[data-theme="void"] body {
+  background-color: #000000;
+  color: #e2e8f0;
+}
+[data-theme="void"] .clean-card {
+  background-color: rgba(14, 14, 16, 0.92);
+  border-color: rgba(100, 116, 139, 0.18);
+  box-shadow: 0 8px 32px 0 rgba(0,0,0,0.75), inset 0 0 0 1px rgba(255,255,255,0.04);
+}
+[data-theme="void"] ::-webkit-scrollbar-track { background: #000000; }
+[data-theme="void"] ::-webkit-scrollbar-thumb { background: #334155; border-color: rgba(100,116,139,0.2); }
+
+[data-theme="nebula"] body {
+  background-color: #1a0b2e;
+  color: #f5f3ff;
+}
+[data-theme="nebula"] .clean-card {
+  background-color: rgba(26, 11, 46, 0.88);
+  border-color: rgba(168, 85, 247, 0.24);
+  box-shadow: 0 8px 32px 0 rgba(88, 28, 135, 0.35), inset 0 0 0 1px rgba(168,85,247,0.08);
+}
+[data-theme="nebula"] ::-webkit-scrollbar-track { background: #1a0b2e; }
+[data-theme="nebula"] ::-webkit-scrollbar-thumb { background: #4c1d95; border-color: rgba(168,85,247,0.3); }
+
+[data-theme="ocean"] body {
+  background-color: #042f2e;
+  color: #ecfeff;
+}
+[data-theme="ocean"] .clean-card {
+  background-color: rgba(4, 47, 46, 0.88);
+  border-color: rgba(20, 184, 166, 0.24);
+  box-shadow: 0 8px 32px 0 rgba(6, 78, 59, 0.35), inset 0 0 0 1px rgba(20,184,166,0.08);
+}
+[data-theme="ocean"] ::-webkit-scrollbar-track { background: #042f2e; }
+[data-theme="ocean"] ::-webkit-scrollbar-thumb { background: #0f766e; border-color: rgba(20,184,166,0.3); }
+
+[data-theme="ember"] body {
+  background-color: #1c0a0a;
+  color: #fff7ed;
+}
+[data-theme="ember"] .clean-card {
+  background-color: rgba(28, 10, 10, 0.88);
+  border-color: rgba(245, 158, 11, 0.24);
+  box-shadow: 0 8px 32px 0 rgba(124, 45, 18, 0.35), inset 0 0 0 1px rgba(245,158,11,0.08);
+}
+[data-theme="ember"] ::-webkit-scrollbar-track { background: #1c0a0a; }
+[data-theme="ember"] ::-webkit-scrollbar-thumb { background: #7c2d12; border-color: rgba(245,158,11,0.3); }
+
+[data-theme="aurora"] body {
+  background-color: #0a1f1a;
+  color: #ecfdf5;
+}
+[data-theme="aurora"] .clean-card {
+  background-color: rgba(10, 31, 26, 0.88);
+  border-color: rgba(34, 197, 94, 0.24);
+  box-shadow: 0 8px 32px 0 rgba(20, 83, 45, 0.35), inset 0 0 0 1px rgba(34,197,94,0.08);
+}
+[data-theme="aurora"] ::-webkit-scrollbar-track { background: #0a1f1a; }
+[data-theme="aurora"] ::-webkit-scrollbar-thumb { background: #14532d; border-color: rgba(34,197,94,0.3); }
+
+/* REDUCE MOTION — data-reduce-motion="1" */
+[data-reduce-motion="1"] *, [data-reduce-motion="1"] *::before, [data-reduce-motion="1"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* GALAXY TOGGLE — data-galaxy-enabled="0" hides background */
+[data-galaxy-enabled="0"] .galaxy-bg {
+  display: none !important;
+}
+
+/* Custom Cosmic Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #070d1e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 9999px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #0d9488;
+}
+
+/* Cosmic Glassmorphic Card Styling */
+.clean-card {
+  background-color: rgba(10, 16, 31, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 1.5rem; /* 24px */
+  border: 1px solid rgba(56, 189, 248, 0.16);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.clean-card-hover {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.clean-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px -4px rgba(13, 148, 136, 0.25);
+  border-color: rgba(45, 212, 191, 0.45);
+}
