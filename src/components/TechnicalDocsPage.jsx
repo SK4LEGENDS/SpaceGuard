@@ -3,7 +3,8 @@ import {
   Cpu, Database, BookOpen, Check, Copy, Globe, Layers, 
   Workflow, Zap, Shield, Code2, Server, BarChart3, Binary, ArrowRight,
   Terminal, Sparkles, CheckCircle2, Users, Award, Code, Heart, Star, Compass,
-  Sun, ShieldAlert, Activity, Atom, Flame, Magnet, Radio, Orbit, Gauge, Bot, Key, Wind
+  Sun, ShieldAlert, Activity, Atom, Flame, Magnet, Radio, Orbit, Gauge, Bot, Key, Wind,
+  Sigma, GitBranch, TrendingUp, MessageSquare, LineChart, Navigation, Wrench, Brain
 } from 'lucide-react';
 
 export default function TechnicalDocsPage() {
@@ -179,8 +180,8 @@ export default function TechnicalDocsPage() {
       tag: "Parallel Algorithm — Fan-Out / Fan-In (Concurrency)",
       color: "teal",
       complexity: "O(1) dispatch / O(N) stream read × 9",
-      description: "Dispatches 9 concurrent non-blocking HTTP GET to NASA DONKI (CME, FLR, GST, SEP, IPS, MPC, RBE, HSS, WSAEnlilSimulations) via Scala Future monadic composition + ForkJoinPool. Mirrored in JS via Promise.allSettled(9). Global 120s Await barrier, CCMC Kauai fallback.",
-      code: `// Algorithm 1: 9-Feed Concurrent Parallel Fetching (V9.scala:1272 / donkiApi.js:150)
+       description: "Dispatches 9 concurrent non-blocking HTTP GET to NASA DONKI (CME, FLR, GST, SEP, IPS, MPC, RBE, HSS, WSAEnlilSimulations) via Scala Future monadic composition + ForkJoinPool. Mirrored in JS via Promise.allSettled(9) with an added Temporal Chunking layer that automatically splits ranges >30 days into sub-windows to prevent API HTTP 400 rejections. Global 120s Await barrier, CCMC Kauai fallback.",
+       code: `// Algorithm 1: 9-Feed Concurrent Parallel Fetching (V9.scala:1272 / donkiApi.js:150)
 val fetched = Await.result(
   for {
     cmeEvents   <- Future(fetchCME(startDate, endDate))
@@ -195,7 +196,8 @@ val fetched = Await.result(
   } yield (cmeEvents, flareEvents, stormEvents, sepEvents, ipsEvents, mpcEvents, rbeEvents, hssEvents, wsaEvents),
   120.seconds
 )
-// JS mirror: await Promise.allSettled([fetchCME, fetchFLR, fetchGST, fetchSEP, fetchIPS, fetchMPC, fetchRBE, fetchHSS, fetchWSAEnlil])`
+// JS mirror: async fetchDonkiEndpoint() { if (diff > 30) return chunkAndMerge(); ... }`
+
     },
     {
       id: 2,
@@ -384,7 +386,7 @@ document.documentElement.setAttribute('data-theme', prefs.theme);`
         { name: "React 18 + Vite 5", desc: "8-phenomena dashboard, translucent pills, visibility filter, 6 palettes, light/dim/dark" },
         { name: "Apache ECharts 5", desc: "CME speed/direction scatter, Kp area, FLR rank, daily timelines, WSA arrival, multi-lines" },
         { name: "Tailwind CSS 3 + Live Galaxy", desc: "Deep-purple canvas (purple/pink/blue clouds, no image), glassmorphic clean-card, reduce-motion" },
-        { name: "ORBIT AI Copilot", desc: "openrouter/free auto-router + 9-table DB access (list fastest CME, WSA arrivals, DB counts), 700 tokens, Kp-only G-scale" }
+        { name: "ORBIT Intelligence Layer", desc: "9 capabilities (NLQ, calc, correlation, trends, briefing, viz routing, explanation, context, fallback) over orbitEngine.js + openrouter/free augmentation, 10-table DB, 700 tokens, Kp-only G-scale" }
       ]
     },
     {
@@ -401,7 +403,7 @@ document.documentElement.setAttribute('data-theme', prefs.theme);`
       layer: "Data Gateway & Upstream Providers — 9 feeds",
       color: "amber",
       items: [
-        { name: "NASA DONKI 9 REST", desc: "CME, FLR, GST, SEP, IPS, MPC, RBE, HSS, WSAEnlilSimulations (Kauai + api.nasa.gov)" },
+        { name: "NASA DONKI 9 REST", desc: "CME, FLR, GST, SEP, IPS, MPC, RBE, HSS, WSAEnlilSimulations (NASA GSFC + CCMC DONKI Data API)" },
         { name: "CCMC Kauai Gateway", desc: "WSA-ENLIL cone inputs lat/lon/speed/halfAngle → arrival/Kp/rmin_re" },
         { name: "NOAA Scales", desc: "G1-G5 (Kp≥5-9) Kp-only, R1-R5 (GOES class), S1-S5 radiation" },
         { name: "Fault-Tolerant Dispatch", desc: "Promise.allSettled(9) + Scala Future 9-way, 120s Await, CCMC fallback" }
@@ -563,32 +565,97 @@ document.documentElement.setAttribute('data-theme', prefs.theme);`
     }
   ];
 
-  return (
-    <div className="space-y-8 py-4">
-      
-      {/* Header Banner */}
-      <div className="clean-card p-8 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/70 text-cyan-400 text-xs font-semibold border border-cyan-800/60">
-              <BookOpen className="w-3.5 h-3.5" />
-              SYSTEM ARCHITECTURE & ENGINE SPECIFICATIONS
-            </div>
-            <h1 className="text-3xl font-bold text-white tracking-tight">
-              SpaceGuard Telemetry Pipeline
-            </h1>
-            <p className="text-slate-300 text-sm max-w-3xl leading-relaxed">
-              Complete technical specification for the SpaceGuard NASA DONKI platform — <strong className="text-cyan-300">Scala 3 Data Engine (<code className="text-cyan-400 font-mono">V9.scala</code>)</strong> with <strong>8 algorithms</strong> across <strong>9 DONKI feeds</strong> (CME, FLR, GST, SEP, IPS, MPC, RBE, HSS, WSA-ENLIL) → <strong>8 phenomena</strong>, <strong>9-feed SQLite (10 tables, 11-col CME)</strong>, deep-purple live galaxy canvas (no image), and <strong className="text-cyan-300">ORBIT AI Copilot (openrouter/free + 9-table DB access, 700 tokens)</strong>.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 p-3 rounded-2xl bg-cyan-950/70 border border-cyan-800/60 text-cyan-300 text-xs font-medium">
-            <Sparkles className="w-4 h-4 text-cyan-400" />
-            <span>Scala 3.3+ &bull; React 18 &bull; 9-Feed SQLite &bull; 8 Phenomena &bull; Live Galaxy</span>
-          </div>
-        </div>
+  /** ORBIT v2 — the nine core capabilities and the engine module behind each. */
+  const orbitCapabilities = [
+    {
+      id: 'nlq', name: 'Natural-Language Queries', icon: MessageSquare, tint: 'cyan',
+      module: 'classify()',
+      summary: 'Understands plain-language questions about SpaceGuard telemetry and maps them onto a feed, metric and operation.',
+      detail: 'Scores every query against an 11-intent taxonomy with an explicit confidence value. Longest-alias-wins feed detection means "radiation belt" resolves to RBE rather than SEP. Below 0.5 confidence the engine defers to the legacy keyword chain rather than guessing — a confidently wrong answer is worse than a question.'
+    },
+    {
+      id: 'analysis', name: 'Data Analysis', icon: Sigma, tint: 'emerald',
+      module: 'runQuery() + stats()',
+      summary: 'Performs real calculation over any of the 9 feeds: count, average, median, min/max, sum, standard deviation and filtered subsets.',
+      detail: 'A generic table-query executor, not hardcoded answers. Filters rows by a comparator, aggregates over a numeric field, ranks, then returns the full distribution (n, mean, median, min, max, sum, σ) so every answer carries context — "2 CMEs above 1000 km/s" is always accompanied by the matched range.'
+    },
+    {
+      id: 'correlation', name: 'Event Correlation', icon: GitBranch, tint: 'purple',
+      module: 'buildCorrelations()',
+      summary: 'Identifies causal and statistical relationships between CMEs, flares, geomagnetic storms, SEP and other events.',
+      detail: 'Pearson r for CME speed vs. resulting Kp, flare→CME association rate, SEP→parent-CME linkage rate, and chain-completeness ratio. Chains are reconstructed as Flare → CME → Solar Wind → Storm → Radiation timelines with per-stage confidence.'
+    },
+    {
+      id: 'compare', name: 'Comparison & Trends', icon: TrendingUp, tint: 'sky',
+      module: 'buildTrends()',
+      summary: 'Compares time periods, event types and telemetry metrics, with linear regression over CME velocity.',
+      detail: 'Splits the requested window at its own midpoint (not at "now", so historical ranges compare correctly), then reports per-feed first-vs-second-half deltas and direction. CME velocity gets a least-squares slope per day to distinguish accelerating from decelerating.'
+    },
+    {
+      id: 'briefing', name: 'Space-Weather Briefings', icon: ShieldAlert, tint: 'rose',
+      module: 'buildFacts()',
+      summary: 'Summarises significant activity into a concise current-dataset overview with threat assessment and hazard score.',
+      detail: 'buildFacts() compacts the window into an authoritative key=value block (feed counts, DB totals, threat level, trends, correlations, chains, anomalies) injected into the system prompt. The model reasons over these numbers instead of re-deriving them, which is what keeps answers inside the 700-token budget.'
+    },
+    {
+      id: 'viz', name: 'Visualization Assistance', icon: LineChart, tint: 'teal',
+      module: 'routeViz()',
+      summary: 'Resolves a query to the specific SpaceGuard view and tab that answers it, then actually navigates the user there.',
+      detail: 'Explicit view requests ("mission control", "open the stage flow") override feed inference. Otherwise the named feed maps to its DashboardPage activeTab. The onNavigate callback in App.jsx reaches both the view router and tab state, so ORBIT moves the user rather than only naming a chart.'
+    },
+    {
+      id: 'explain', name: 'Intelligent Explanation', icon: Brain, tint: 'amber',
+      module: 'analysis.brief',
+      summary: 'Converts complex telemetry and analytical output into clear, contextual explanations.',
+      detail: 'Backed by the same telemetryAnalysis layer as Mission Control, so explanations are grounded in the actual rows. The NOAA G-scale rule is enforced as Kp-only in the prompt, and a style rule requires the model to state when a figure is unavailable rather than invent one.'
+    },
+    {
+      id: 'context', name: 'Conversational Context', icon: MessageSquare, tint: 'cyan',
+      module: 'resolveContext()',
+      summary: 'Maintains context across follow-up questions so an event can be investigated naturally.',
+      detail: 'The previous turn\'s intent, feed and metric are carried in a ref and inherited by follow-ups. "Why?" or "tell me more" after a CME-speed question keeps that subject instead of falling through to generic help. An explicitly named new subject overrides the inherited one.'
+    },
+    {
+      id: 'fallback', name: 'Fallback Intelligence', icon: Wrench, tint: 'slate',
+      module: 'generateLocalResponse()',
+      summary: 'Continues answering telemetry questions through the local engine when external AI services are unavailable.',
+      detail: 'Data queries and visualization routing are answered deterministically before any network call, so the most common questions work with no API key and cannot be affected by a 700-token LLM sample. The legacy keyword chain covers explanation, DB, engine and team branches when the router is unreachable.'
+    }
+  ];
 
-        {/* Navigation Tabs (Single Line) */}
-        <div className="flex items-center gap-1.5 pt-4 border-t border-slate-800 overflow-x-auto pb-0.5">
+  /** The five-stage engine pipeline, in execution order. */
+  const orbitPipeline = [
+    { step: '1', title: 'Classify', module: 'classify()', icon: MessageSquare, desc: 'Score the query against 11 intents, extract feed + metric + number, flag low confidence as a follow-up.' },
+    { step: '2', title: 'Resolve Context', module: 'resolveContext()', icon: GitBranch, desc: 'Inherit intent / feed / metric from the previous turn when the query is a bare follow-up ("why?", "more").' },
+    { step: '3', title: 'Answer Exactly', module: 'runQuery() / routeViz()', icon: Sigma, desc: 'Visualization and data-query intents are answered deterministically — 0 API calls, no token budget.' },
+    { step: '4', title: 'Augment', module: 'buildFacts()', icon: Sparkles, desc: 'Everything else goes to OpenRouter with a compact authoritative facts block plus the full analysis brief.' },
+    { step: '5', title: 'Degrade Gracefully', module: 'generateLocalResponse()', icon: Wrench, desc: 'On 404 / 401 / network failure, fall back through the model chain to the local engine so the user always gets an answer.' }
+  ];
+
+  const CAP_TINT = {
+    cyan: 'text-cyan-400', emerald: 'text-emerald-400', purple: 'text-purple-400',
+    sky: 'text-sky-400', rose: 'text-rose-400', teal: 'text-teal-400',
+    amber: 'text-amber-400', slate: 'text-slate-400'
+  };
+  const CAP_CHIP = {
+    cyan: 'border-cyan-800/60 bg-cyan-950/50 text-cyan-300',
+    emerald: 'border-emerald-800/60 bg-emerald-950/50 text-emerald-300',
+    purple: 'border-purple-800/60 bg-purple-950/50 text-purple-300',
+    sky: 'border-sky-800/60 bg-sky-950/50 text-sky-300',
+    rose: 'border-rose-800/60 bg-rose-950/50 text-rose-300',
+    teal: 'border-teal-800/60 bg-teal-950/50 text-teal-300',
+    amber: 'border-amber-800/60 bg-amber-950/50 text-amber-300',
+    slate: 'border-slate-700 bg-slate-900 text-slate-300'
+  };
+
+  return (
+    <div className="py-4">
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Vertical Sidebar Navigation */}
+        <nav className="lg:w-64 shrink-0 space-y-1">
+          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3 mb-3">
+            Documentation
+          </div>
           {[
             { id: 'algorithms', label: '8 Algorithms', icon: Code2 },
             { id: 'theory', label: 'Space Weather Theory', icon: Atom },
@@ -606,81 +673,472 @@ document.documentElement.setAttribute('data-theme', prefs.theme);`
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap flex-shrink-0 ${
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                   isActive
-                    ? 'bg-teal-700 text-white shadow-sm'
-                    : 'bg-slate-900 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
+                    ? 'bg-cyan-600/20 text-cyan-300 border-l-4 border-cyan-500 shadow-sm'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60 border-l-4 border-transparent'
                 }`}
               >
-                <Icon className="w-3.5 h-3.5" />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-cyan-300' : 'text-slate-500'}`} />
                 {tab.label}
               </button>
             );
           })}
-        </div>
-      </div>
+        </nav>
 
-      {/* TAB 1: 6 CORE ALGORITHMS */}
-      {activeTab === 'algorithms' && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-white">The 8 Analytical & Processing Algorithms</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Implemented in <code className="text-cyan-400 font-mono">scala/V9.scala</code> (+ <code className="text-cyan-400 font-mono">donkiApi.js:150 fetchAllSpaceWeather 9-feed</code> + <code className="text-cyan-400 font-mono">DashboardPage.jsx:678 daily timeline</code>) and mirrored reactively</p>
+        {/* Main Content Area */}
+        <div className="flex-1 min-w-0 space-y-8">
+          {/* Header Banner */}
+          <div className="clean-card p-8 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/70 text-cyan-400 text-xs font-semibold border border-cyan-800/60">
+                  <BookOpen className="w-3.5 h-3.5" />
+                  SYSTEM ARCHITECTURE & ENGINE SPECIFICATIONS
+                </div>
+                <h1 className="text-3xl font-bold text-white tracking-tight">
+                  SpaceGuard Telemetry Pipeline
+                </h1>
+                <p className="text-slate-300 text-sm max-w-3xl leading-relaxed">
+                  Complete technical specification for the SpaceGuard NASA DONKI platform — <strong className="text-cyan-300">Scala 3 Data Engine (<code className="text-cyan-400 font-mono">V9.scala</code>)</strong> with <strong>8 algorithms</strong> across <strong>9 DONKI feeds</strong> (CME, FLR, GST, SEP, IPS, MPC, RBE, HSS, WSA-ENLIL) → <strong>8 phenomena</strong>, <strong>9-feed SQLite (10 tables, 11-col CME)</strong>, deep-purple live galaxy canvas (no image), and <strong className="text-cyan-300">ORBIT AI Copilot (openrouter/free + 9-table DB access, 700 tokens)</strong>.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 p-3 rounded-2xl bg-cyan-950/70 border border-cyan-800/60 text-cyan-300 text-xs font-medium">
+                <Sparkles className="w-4 h-4 text-cyan-400" />
+                <span>Scala 3.3+ &bull; React 18 &bull; 9-Feed SQLite &bull; 8 Phenomena &bull; Live Galaxy</span>
+              </div>
             </div>
-            <span className="text-xs font-semibold px-3 py-1 bg-cyan-950/70 text-cyan-400 rounded-full border border-cyan-800/60">
-              8 / 8 Algorithms Active
-            </span>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {algorithms.map((algo) => (
-              <div key={algo.id} className="clean-card p-6 flex flex-col gap-4">
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2.5">
-                      <span className="w-7 h-7 rounded-xl bg-cyan-950/70 text-cyan-400 font-bold text-xs flex items-center justify-center border border-cyan-800/60">
-                        {algo.id}
-                      </span>
-                      <div>
-                        <h3 className="text-sm font-bold text-white">{algo.name}</h3>
-                        <span className="text-[11px] text-cyan-400 font-mono font-medium">{algo.tag}</span>
+          {/* Tab Contents */}
+          {activeTab === 'algorithms' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-white">The 8 Analytical & Processing Algorithms</h2>
+                  <p className="text-xs text-slate-400 mt-0.5">Implemented in <code className="text-cyan-400 font-mono">scala/V9.scala</code> (+ <code className="text-cyan-400 font-mono">donkiApi.js:150 fetchAllSpaceWeather 9-feed</code> + <code className="text-cyan-400 font-mono">DashboardPage.jsx:678 daily timeline</code>) and mirrored reactively</p>
+                </div>
+                <span className="text-xs font-semibold px-3 py-1 bg-cyan-950/70 text-cyan-400 rounded-full border border-cyan-800/60">
+                  8 / 8 Algorithms Active
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {algorithms.map((algo) => (
+                  <div key={algo.id} className="clean-card p-6 flex flex-col gap-4">
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2.5">
+                          <span className="w-7 h-7 rounded-xl bg-cyan-950/70 text-cyan-400 font-bold text-xs flex items-center justify-center border border-cyan-800/60">
+                            {algo.id}
+                          </span>
+                          <div>
+                            <h3 className="text-sm font-bold text-white">{algo.name}</h3>
+                            <span className="text-[11px] text-cyan-400 font-mono font-medium">{algo.tag}</span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-slate-900 text-slate-300 border border-slate-700/60 whitespace-nowrap">
+                          {algo.complexity}
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-slate-300 leading-relaxed font-sans">
+                        {algo.description}
+                      </p>
+                    </div>
+
+                    <div className="relative rounded-xl bg-slate-900 p-3.5 overflow-hidden font-mono text-[11px] text-slate-200 border border-slate-800">
+                      <button
+                        onClick={() => handleCopy(algo.code, `algo-${algo.id}`)}
+                        className="absolute top-2.5 right-2.5 p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all"
+                        title="Copy Code"
+                      >
+                        {copiedIndex === `algo-${algo.id}` ? (
+                          <Check className="w-3.5 h-3.5 text-cyan-400" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                      <pre className="overflow-x-auto leading-relaxed text-[10.5px]">
+                        <code>{algo.code}</code>
+                      </pre>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'theory' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-white">Astrophysical & Space Weather Theory</h2>
+                  <p className="text-xs text-slate-400 mt-0.5">Scientific fundamentals, physical generation mechanisms, and terrestrial impact models for all 9 DONKI feeds — 8 phenomena + WSA-ENLIL prediction</p>
+                </div>
+                <span className="text-xs font-semibold px-3 py-1 bg-cyan-950/70 text-cyan-400 rounded-full border border-cyan-800/60">
+                  9 DONKI Feeds Explained
+                </span>
+              </div>
+
+              <div className="space-y-6">
+                {theoryPhenomena.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div key={item.id} className="clean-card p-6 sm:p-8 space-y-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2.5 rounded-2xl bg-cyan-950/70 text-cyan-400 border border-cyan-800/60">
+                            <Icon className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h3 className="text-base font-bold text-white">{item.title}</h3>
+                            <span className="text-[11px] font-mono font-semibold text-cyan-400">{item.badge}</span>
+                          </div>
+                        </div>
+                        <span className="text-[11px] font-mono px-3 py-1 rounded-full bg-slate-900 text-cyan-300 border border-slate-700/60">
+                          NASA DONKI Feed
+                        </span>
+                      </div>
+
+                      <p className="text-xs sm:text-sm text-slate-200 font-medium italic leading-relaxed">
+                        "{item.tagline}"
+                      </p>
+
+                      <p className="text-xs text-slate-300 leading-relaxed font-sans">
+                        {item.overview}
+                      </p>
+
+                      <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                          Physical Dynamics & Ingestion Parameters
+                        </span>
+                        <ul className="space-y-1.5 font-sans text-xs text-slate-200">
+                          {item.physics.map((p, pidx) => (
+                            <li key={pidx} className="flex items-start gap-2">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0 mt-0.5" />
+                              <span>{p}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-amber-950/70 border border-amber-200 text-amber-900 text-xs flex items-start gap-2.5">
+                        <ShieldAlert className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <strong className="font-bold">Operational Hazard & Earth Impact: </strong>
+                          <span>{item.hazard}</span>
+                        </div>
                       </div>
                     </div>
-                    <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-slate-900 text-slate-300 border border-slate-700/60 whitespace-nowrap">
-                      {algo.complexity}
-                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'architecture' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-white">System Architecture</h2>
+                <span className="text-xs font-semibold px-3 py-1 bg-cyan-950/70 text-cyan-400 rounded-full border border-cyan-800/60">
+                  Design Patterns
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="clean-card p-6 space-y-4">
+                  <div className="flex items-center gap-2 text-cyan-400 font-bold text-sm">
+                    <Workflow className="w-4 h-4" />
+                    Data Flow Architecture
                   </div>
-
-                  <p className="text-xs text-slate-300 leading-relaxed font-sans">
-                    {algo.description}
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    SpaceGuard utilizes a <strong>Symmetric Asynchronous</strong> architecture. The Scala Data Engine and React Dashboard are sibling processes that interact with the same data sources (NASA DONKI) but optimize for different needs: high-throughput batch ingestion (Scala) vs. low-latency interactive exploration (React).
                   </p>
+                  <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-[11px] font-mono text-slate-400">
+                    Sourcing → Normalization → SQLite Storage → ECharts Render
+                  </div>
                 </div>
-
-                <div className="relative rounded-xl bg-slate-900 p-3.5 overflow-hidden font-mono text-[11px] text-slate-200 border border-slate-800">
-                  <button
-                    onClick={() => handleCopy(algo.code, `algo-${algo.id}`)}
-                    className="absolute top-2.5 right-2.5 p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all"
-                    title="Copy Code"
-                  >
-                    {copiedIndex === `algo-${algo.id}` ? (
-                      <Check className="w-3.5 h-3.5 text-cyan-400" />
-                    ) : (
-                      <Copy className="w-3.5 h-3.5" />
-                    )}
-                  </button>
-                  <pre className="overflow-x-auto leading-relaxed text-[10.5px]">
-                    <code>{algo.code}</code>
-                  </pre>
+                <div className="clean-card p-6 space-y-4">
+                  <div className="flex items-center gap-2 text-cyan-400 font-bold text-sm">
+                    <Database className="w-4 h-4" />
+                    Persistence Layer
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    A hybrid SQLite strategy is employed. The backend uses <strong>SQLite JDBC</strong> for permanent file-based storage, while the frontend uses <strong>sql.js WASM</strong> to maintain a mirror of the current analysis window in browser memory for instant filtering and zero-latency re-renders.
+                  </p>
+                  <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-[11px] font-mono text-slate-400">
+                    Local DB (.db) &lt;— API &gt;— Browser WASM (RAM)
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+              <div className="clean-card p-6">
+                <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-cyan-400" /> Component Hierarchy
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {[
+                    { name: "App Container", desc: "State Orchestrator & Router" },
+                    { name: "Dashboard", desc: "Telemetry View & Filters" },
+                    { name: "Mission Control", desc: "Situational Analysis" },
+                    { name: "Event Timeline", desc: "Causal Chain Viewer" },
+                    { name: "ORBIT Copilot", desc: "Intelligence Layer" },
+                    { name: "Settings", desc: "User Prefs & Keys" },
+                  ].map((item, i) => (
+                    <div key={i} className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-center">
+                      <div className="text-xs font-bold text-white">{item.name}</div>
+                      <div className="text-[10px] text-slate-500">{item.desc}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
-      {/* TAB 2: SPACE WEATHER THEORY (5 PHENOMENA EXPLAINED) */}
-      {activeTab === 'theory' && (
+          {activeTab === 'packages' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-white">Scala Dependencies & Packages</h2>
+                <span className="text-xs font-semibold px-3 py-1 bg-cyan-950/70 text-cyan-400 rounded-full border border-cyan-800/60">
+                  v3.3 Runtime
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {packages.map((pkg) => (
+                  <div key={pkg.name} className="clean-card p-6 space-y-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-cyan-400">
+                          <Server className="w-4 h-4" />
+                        </div>
+                        <h3 className="text-sm font-bold text-white">{pkg.name}</h3>
+                      </div>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
+                        {pkg.category}
+                      </span>
+                    </div>
+                    <div className="p-2 rounded bg-slate-950 border border-slate-800 text-xs font-mono text-cyan-500">
+                      {pkg.directive}
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed">{pkg.purpose}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {pkg.features.map((f, i) => (
+                        <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700/60">
+                          {f}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'techstack' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-white">Full Technology Stack</h2>
+                <span className="text-xs font-semibold px-3 py-1 bg-cyan-950/70 text-cyan-400 rounded-full border border-cyan-800/60">
+                  Production Ready
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {techStack.map((layer) => (
+                  <div key={layer.layer} className="clean-card p-6 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-6 rounded-full bg-current ${layer.color === 'teal' ? 'text-teal-500' : layer.color === 'cyan' ? 'text-cyan-500' : layer.color === 'purple' ? 'text-purple-500' : 'text-amber-500'}`} />
+                      <h3 className="text-sm font-bold text-white">{layer.layer}</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {layer.items.map((item, i) => (
+                        <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800/60">
+                          <div className="mt-1 w-1.5 h-1.5 rounded-full bg-cyan-500 shrink-0" />
+                          <div>
+                            <div className="text-xs font-bold text-slate-200">{item.name}</div>
+                            <div className="text-[11px] text-slate-400 leading-relaxed">{item.desc}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'database' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-white">SQLite Storage Schema</h2>
+                <span className="text-xs font-semibold px-3 py-1 bg-cyan-950/70 text-cyan-400 rounded-full border border-cyan-800/60">
+                  Relational Model
+                </span>
+              </div>
+              <div className="grid grid-cols-1 gap-6">
+                {schemas.map((s) => (
+                  <div key={s.table} className="clean-card p-6 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Database className="w-4 h-4 text-cyan-400" />
+                        <h3 className="text-sm font-bold text-white">{s.table}</h3>
+                      </div>
+                      <span className="text-[10px] font-mono text-slate-500">{s.desc}</span>
+                    </div>
+                    <div className="relative rounded-xl bg-slate-950 p-4 overflow-hidden font-mono text-xs text-cyan-300 border border-slate-800">
+                      <button
+                        onClick={() => handleCopy(s.sql, `sql-${s.table}`)}
+                        className="absolute top-2 right-2 p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all"
+                      >
+                        {copiedIndex === `sql-${s.table}` ? <Check className="w-3.5 h-3.5 text-cyan-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                      <pre className="whitespace-pre-wrap">{s.sql}</pre>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'endpoints' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-white">NASA DONKI API Endpoints</h2>
+                <span className="text-xs font-semibold px-3 py-1 bg-cyan-950/70 text-cyan-400 rounded-full border border-cyan-800/60">
+                  REST Gateway
+                </span>
+              </div>
+              <div className="grid grid-cols-1 gap-4">
+                {[
+                  { feed: "CME", ep: "CME", desc: "Coronal Mass Ejections" },
+                  { feed: "FLR", ep: "FLR", desc: "Solar Flares" },
+                  { feed: "GST", ep: "GST", desc: "Geomagnetic Storms" },
+                  { feed: "SEP", ep: "SEP", desc: "Solar Energetic Particles" },
+                  { feed: "IPS", ep: "IPS", desc: "Interplanetary Shocks" },
+                  { feed: "MPC", ep: "MPC", desc: "Magnetopause Crossings" },
+                  { feed: "RBE", ep: "RBE", desc: "Radiation Belt Enhancements" },
+                  { feed: "HSS", ep: "HSS", desc: "High-Speed Streams" },
+                  { feed: "WSA", ep: "WSAEnlilSimulations", desc: "WSA-ENLIL Prediction" },
+                ].map((ep, i) => (
+                  <div key={i} className="clean-card p-4 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-cyan-400">
+                        <Globe className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-white">{ep.feed} {ep.desc}</div>
+                        <div className="text-[10px] font-mono text-slate-500">/get/{ep.ep}</div>
+                      </div>
+                    </div>
+                    <div className="text-[10px] font-mono text-slate-400 bg-slate-900 px-2 py-1 rounded border border-slate-800">
+                      GET / JSON
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'orbit' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-white">ORBIT AI Intelligence Layer</h2>
+                <span className="text-xs font-semibold px-3 py-1 bg-cyan-950/70 text-cyan-400 rounded-full border border-cyan-800/60">
+                  Reasoning Engine
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {orbitCapabilities.map((cap) => (
+                  <div key={cap.id} className="clean-card p-6 space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-xl bg-slate-900 border border-slate-800 ${CAP_TINT[cap.tint]}`}>
+                        {React.createElement(cap.icon, { className: "w-5 h-5" })}
+                      </div>
+                      <h3 className="text-sm font-bold text-white">{cap.name}</h3>
+                    </div>
+                    <div className="text-[10px] font-mono text-cyan-400 bg-cyan-950/30 px-2 py-1 rounded border border-cyan-800/40 inline-block">
+                      Module: {cap.module}
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed font-medium">{cap.summary}</p>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">{cap.detail}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="clean-card p-6">
+                <h3 className="text-sm font-bold text-white mb-6 flex items-center gap-2">
+                  <Workflow className="w-4 h-4 text-cyan-400" />
+                  ORBIT Execution Pipeline
+                </h3>
+                <div className="flex flex-col gap-4">
+                  {orbitPipeline.map((step, i) => (
+                    <div key={i} className="flex items-start gap-4 p-4 rounded-2xl bg-slate-900/50 border border-slate-800 group hover:border-cyan-500/40 transition-all">
+                      <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-white shrink-0 border border-slate-700 group-hover:bg-cyan-600 transition-colors">
+                        {step.step}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-bold text-white">{step.title}</span>
+                          <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/50 px-1.5 py-0.5 rounded border border-cyan-800/60">{step.module}</span>
+                        </div>
+                        <p className="text-[11px] text-slate-400 leading-relaxed">{step.desc}</p>
+                      </div>
+                      <div className="p-2 rounded-lg bg-slate-800 text-slate-400 group-hover:text-cyan-400 transition-colors">
+                        {React.createElement(step.icon, { className: "w-4 h-4" })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'team' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-white">Engineering Team</h2>
+                <span className="text-xs font-semibold px-3 py-1 bg-cyan-950/70 text-cyan-400 rounded-full border border-cyan-800/60">
+                  Core Contributors
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {teamMembers.map((member) => (
+                  <div key={member.name} className="clean-card p-6 space-y-6">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-14 h-14 rounded-2xl ${member.avatarBg} flex items-center justify-center text-white text-xl font-bold shadow-lg`}>
+                        {member.name[0]}
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-white">{member.name}</h3>
+                        <p className="text-xs text-slate-400 font-medium">{member.role}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-cyan-400">
+                        <Award className="w-3.5 h-3.5" />
+                        Core Contributions
+                      </div>
+                      <ul className="space-y-2">
+                        {member.contributions.map((c, i) => (
+                          <li key={i} className="text-xs text-slate-300 leading-relaxed flex gap-2">
+                            <span className="text-cyan-500">•</span>
+                            {c}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {member.skills.map((s, i) => (
+                        <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-slate-900 text-slate-400 border border-slate-800">
+                          {s}
+                        </span>
+                          ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: SPACE WEATHER THEORY (5 PHENOMENA EXPLAINED) */}
+          {activeTab === 'theory' && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
@@ -987,64 +1445,64 @@ document.documentElement.setAttribute('data-theme', prefs.theme);`
             {[
               {
                 name: "Coronal Mass Ejections (CME)",
-                endpoint: "https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/CME",
-                altEndpoint: "https://api.nasa.gov/DONKI/CME",
+                endpoint: "https://ccmc.gsfc.nasa.gov/DONKI-API/get/CME",
+                altEndpoint: "https://ccmc.gsfc.nasa.gov/DONKI-API/get/CME",
                 params: "startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&api_key=KEY",
                 desc: "Fetches solar plasma ejections, radial trajectory analyses, half-angles, speeds, latitude/longitude, linkedEvents and enlilList Earth-GB predictions."
               },
               {
                 name: "Solar Flares (FLR)",
-                endpoint: "https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/FLR",
-                altEndpoint: "https://api.nasa.gov/DONKI/FLR",
+                endpoint: "https://ccmc.gsfc.nasa.gov/DONKI-API/get/FLR",
+                altEndpoint: "https://ccmc.gsfc.nasa.gov/DONKI-API/get/FLR",
                 params: "startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&api_key=KEY",
                 desc: "Queries GOES X-ray solar flare events, class designations (A, B, C, M, X), solar source active regions, and peak emission timestamps."
               },
               {
                 name: "Geomagnetic Storms (GST)",
-                endpoint: "https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/GST",
-                altEndpoint: "https://api.nasa.gov/DONKI/GST",
+                endpoint: "https://ccmc.gsfc.nasa.gov/DONKI-API/get/GST",
+                altEndpoint: "https://ccmc.gsfc.nasa.gov/DONKI-API/get/GST",
                 params: "startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&api_key=KEY",
                 desc: "Retrieves planetary geomagnetic storm events and multi-observatory planetary Kp index time-series matrices."
               },
               {
                 name: "Solar Energetic Particles (SEP)",
-                endpoint: "https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/SEP",
-                altEndpoint: "https://api.nasa.gov/DONKI/SEP",
+                endpoint: "https://ccmc.gsfc.nasa.gov/DONKI-API/get/SEP",
+                altEndpoint: "https://ccmc.gsfc.nasa.gov/DONKI-API/get/SEP",
                 params: "startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&api_key=KEY",
                 desc: "Provides high-energy proton flux detection events, instrument sensor telemetry, and linked CME identifiers."
               },
               {
                 name: "Interplanetary Shocks (IPS)",
-                endpoint: "https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/IPS",
-                altEndpoint: "https://api.nasa.gov/DONKI/IPS",
+                endpoint: "https://ccmc.gsfc.nasa.gov/DONKI-API/get/IPS",
+                altEndpoint: "https://ccmc.gsfc.nasa.gov/DONKI-API/get/IPS",
                 params: "startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&api_key=KEY",
                 desc: "Monitors heliospheric shock wave crossings at Lagrange point L1 instruments (ACE, DSCOVR, SOHO)."
               },
               {
                 name: "Magnetopause Crossings (MPC)",
-                endpoint: "https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/MPC",
-                altEndpoint: "https://api.nasa.gov/DONKI/MPC",
+                endpoint: "https://ccmc.gsfc.nasa.gov/DONKI-API/get/MPC",
+                altEndpoint: "https://ccmc.gsfc.nasa.gov/DONKI-API/get/MPC",
                 params: "startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&api_key=KEY",
                 desc: "Magnetopause boundary crossings from SWMF model — eventTime, MODEL: SWMF instrument, linkedEvents (CME/GST/IPS/HSS)."
               },
               {
                 name: "Radiation Belt Enhancements (RBE)",
-                endpoint: "https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/RBE",
-                altEndpoint: "https://api.nasa.gov/DONKI/RBE",
+                endpoint: "https://ccmc.gsfc.nasa.gov/DONKI-API/get/RBE",
+                altEndpoint: "https://ccmc.gsfc.nasa.gov/DONKI-API/get/RBE",
                 params: "startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&api_key=KEY",
                 desc: "Outer belt >2 MeV electron flux enhancements (GOES-P SEISS) — daily RBE count used as electron flux proxy, linked to HSS/GST."
               },
               {
                 name: "High-Speed Streams (HSS)",
-                endpoint: "https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/HSS",
-                altEndpoint: "https://api.nasa.gov/DONKI/HSS",
+                endpoint: "https://ccmc.gsfc.nasa.gov/DONKI-API/get/HSS",
+                altEndpoint: "https://ccmc.gsfc.nasa.gov/DONKI-API/get/HSS",
                 params: "startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&api_key=KEY",
                 desc: "Coronal-hole high-speed solar wind streams — DSCOVR PLASMAG / ACE SWEPAM/MAG / STEREO PLASTIC, daily HSS count as wind-speed proxy."
               },
               {
                 name: "WSA-ENLIL Simulations (WSAEnlilSimulations)",
-                endpoint: "https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/WSAEnlilSimulations",
-                altEndpoint: "https://api.nasa.gov/DONKI/WSAEnlilSimulations",
+                endpoint: "https://ccmc.gsfc.nasa.gov/DONKI-API/get/WSAEnlilSimulations",
+                altEndpoint: "https://ccmc.gsfc.nasa.gov/DONKI-API/get/WSAEnlilSimulations",
                 params: "startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&api_key=KEY",
                 desc: "Heliospheric MHD predictions per CME input — flattened per cmeInput: simulationID::cmeID, latitude/longitude/speed/halfAngle, estimatedShockArrivalTime, isEarthGB, kp_90/135/180, rmin_re, impactList."
               }
@@ -1073,25 +1531,146 @@ document.documentElement.setAttribute('data-theme', prefs.theme);`
         </div>
       )}
 
-      {/* TAB 8: ORBIT AI COPILOT (NEW) */}
+      {/* TAB 8: ORBIT AI COPILOT */}
       {activeTab === 'orbit' && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-white">ORBIT — AI Space Weather Copilot (9-Feed DB Aware)</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Renamed from SpaceGuard AI → ORBIT. <code className="text-cyan-400 font-mono">openrouter/free</code> auto-router + Gemma fallbacks + <strong className="text-cyan-300">9-table DB access</strong> (list fastest CME, WSA Earth arrivals, DB counts) across 8 phenomena. Pure React, no HTML rerouting.</p>
+              <h2 className="text-xl font-bold text-white">ORBIT — SpaceGuard Intelligence Layer</h2>
+              <p className="text-xs text-slate-400 mt-0.5">Nine core capabilities over a deterministic reasoning engine (<code className="text-cyan-400 font-mono">services/orbitEngine.js</code>) + <code className="text-cyan-400 font-mono">openrouter/free</code> augmentation with Gemma/Llama/GPT-OSS fallbacks + <strong className="text-cyan-300">10-table DB access</strong>. Answers from the telemetry, not from recalled text.</p>
             </div>
-            <span className="text-xs font-semibold px-3 py-1 bg-cyan-950/70 text-cyan-400 rounded-full border border-cyan-800/60">openrouter/free · 700 tokens · temp 0.3 · 9 tables</span>
+            <span className="text-xs font-semibold px-3 py-1 bg-cyan-950/70 text-cyan-400 rounded-full border border-cyan-800/60">9 capabilities · 700 tokens · temp 0.3 · 10 tables</span>
+          </div>
+
+          {/* Engine gate */}
+          <div className="clean-card p-6 space-y-4 border-teal-500/30">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2"><Zap className="w-4 h-4 text-teal-400" /> Engine Gate — Deterministic Before Generative</h3>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              ORBIT v2 routes every query through a classifier <em>before</em> any network call. Visualization
+              and data-query intents are answered exactly in the browser. Two consequences: a count like
+              <code className="text-cyan-400 font-mono"> "how many CMEs above 1200 km/s?"</code> must not depend on
+              a 700-token sample from a free 8B model, and the most common questions work with
+              <strong className="text-white"> no API key at all</strong>.
+            </p>
+            <code className="block p-3 rounded-xl bg-slate-900 text-slate-200 font-mono text-[11px] whitespace-pre-wrap leading-relaxed">{`const cls = resolveContext(lastIntentRef.current, userText);
+lastIntentRef.current = { intent: cls.intent, feed: cls.feed, metric: cls.metric, subject: userText };
+
+const engineReply = (() => {
+  if (cls.intent === 'viz') return handleVizRequest(userText, cls.feed);
+  if (cls.intent === 'dataQuery' && cls.confidence >= LOW_CONFIDENCE) return handleDataQuery(userText, cls);
+  return null;                       // below threshold -> defer, never guess
+})();
+
+if (engineReply) { /* answer locally, 0 API calls */ return; }
+// otherwise -> OpenRouter with buildFacts() injected`}</code>
+          </div>
+
+          {/* Request pipeline */}
+          <div className="clean-card p-6 space-y-5">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2"><Workflow className="w-4 h-4 text-cyan-400" /> Request Pipeline</h3>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+              {orbitPipeline.map((s) => {
+                const Icon = s.icon;
+                return (
+                  <div key={s.step} className="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="w-6 h-6 rounded-lg bg-cyan-950/70 text-cyan-400 text-xs font-bold flex items-center justify-center border border-cyan-800/60">{s.step}</span>
+                      <Icon className="w-4 h-4 text-cyan-400" />
+                    </div>
+                    <h4 className="text-xs font-bold text-white">{s.title}</h4>
+                    <code className="block text-[10px] font-mono text-teal-300 break-all">{s.module}</code>
+                    <p className="text-[10.5px] text-slate-400 leading-relaxed">{s.desc}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Nine capabilities */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2"><Sparkles className="w-4 h-4 text-cyan-400" /> The Nine Core Capabilities</h3>
+              <span className="text-[10px] font-semibold px-2.5 py-1 bg-teal-950/70 text-teal-300 rounded-full border border-teal-800/60 font-mono">9 / 9 Active</span>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {orbitCapabilities.map((c) => {
+                const Icon = c.icon;
+                return (
+                  <div key={c.id} className="clean-card p-5 space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                        <Icon className={`w-4 h-4 ${CAP_TINT[c.tint]}`} />
+                        {c.name}
+                      </h4>
+                      <code className={`text-[10px] font-mono px-2 py-0.5 rounded border whitespace-nowrap ${CAP_CHIP[c.tint]}`}>{c.module}</code>
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed">{c.summary}</p>
+                    <p className="text-[11px] text-slate-400 leading-relaxed font-sans border-t border-slate-800/70 pt-2.5">{c.detail}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Worked examples */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="clean-card p-6 space-y-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2"><Sigma className="w-4 h-4 text-emerald-400" /> Structured Query Execution</h3>
+              <p className="text-xs text-slate-300 leading-relaxed">The capability the legacy keyword engine could not perform at all — arbitrary calculation over the parsed feed.</p>
+              <code className="block p-3 rounded-xl bg-slate-900 text-slate-200 font-mono text-[11px] whitespace-pre-wrap leading-relaxed">{`// "how many CMEs are faster than 1000?"
+const { comparator, threshold, metric } =
+  extractThreshold('faster than 800');   // '>', 800, 'speed'
+
+const res = runQuery(data, 'cmes', {
+  metric, comparator, threshold, aggregate: 'count', limit: 5
+});
+// res.matched = 2     res.total = 3
+// res.stats = { n, mean, median, min, max, sum, stdDev }`}</code>
+              <p className="text-[11px] text-slate-400">Comparatives carry their own metric: <code className="text-cyan-400 font-mono">faster</code> → speed &gt;, <code className="text-cyan-400 font-mono">wider</code> → halfAngle &gt;, <code className="text-cyan-400 font-mono">stronger</code> → maxKpIndex &gt;.</p>
+            </div>
+
+            <div className="clean-card p-6 space-y-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2"><Navigation className="w-4 h-4 text-teal-400" /> Visualization Routing</h3>
+              <p className="text-xs text-slate-300 leading-relaxed">ORBIT navigates rather than merely naming a chart. <code className="text-cyan-400 font-mono">orbitNavigate</code> in App.jsx reaches both the view router and the dashboard tab state.</p>
+              <code className="block p-3 rounded-xl bg-slate-900 text-slate-200 font-mono text-[11px] whitespace-pre-wrap leading-relaxed">{`orbitNavigate = useCallback((view, tab) => {
+  if (view === 'dashboard') {
+    setCurrentView('dashboard');
+    if (tab) setActiveTelemetryTab(tab);
+  } else if (view) setCurrentView(view);
+}, []);
+
+// Feed -> tab: cmes|wes -> 'cme-earth'  flares -> 'flare'
+//              storms   -> 'geomagnetic' seps   -> 'sep'
+//              ipss     -> 'ips'          rbes   -> 'rbe'
+//              hss      -> 'hss'          mpcs   -> 'mpc'
+// Views: chains -> 'timeline' · threat -> 'mission-control'
+//        algorithms -> 'docs'`}</code>
+            </div>
+          </div>
+
+          {/* Facts block */}
+          <div className="clean-card p-6 space-y-3">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2"><Database className="w-4 h-4 text-cyan-400" /> Authoritative Facts Block</h3>
+            <p className="text-xs text-slate-300 leading-relaxed"><code className="text-cyan-400 font-mono">buildFacts()</code> compacts the window into a key=value block injected into the system prompt, carrying the instruction <em>never contradict these, never invent numbers</em>. It is what keeps answers inside the token budget — the model reasons over figures rather than re-deriving them.</p>
+            <code className="block p-3 rounded-xl bg-slate-900 text-slate-200 font-mono text-[11px] whitespace-pre-wrap leading-relaxed">{`WINDOW 2026-08-01→2026-08-30 source=donki-live
+LIVE CME=141 FLR=6 GST=3 SEP=8 IPS=10 MPC=0 RBE=2 HSS=6 WSA=57
+DB cmes=141 flares=6 storms=3 seps=8 … queries=1
+THREAT Quiet–Normal Solar Activity score=11/100 gscale=G0 maxKp=3.67
+CME peak=1572km/s earthGB=2
+TRENDS Flares rising (1→5); RBE flat (1→1)
+CORR CME speed vs. peak Kp r=0.31 (weak)
+CHAINS n=4 complete=1
+SPEED mean=612 median=588 sd=214 slope=1.4/day`}</code>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="clean-card p-6 space-y-3">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2"><Bot className="w-4 h-4 text-cyan-400" /> Identity & Branding</h3>
-              <p className="text-xs text-slate-300 leading-relaxed">ORBIT is the conversational layer of SpaceGuard. Formerly SpaceGuard AI, now <strong className="text-white">ORBIT</strong> in all greetings, headers, and system prompts. Platform remains SpaceGuard; AI is ORBIT.</p>
+              <h3 className="text-sm font-bold text-white flex items-center gap-2"><Bot className="w-4 h-4 text-cyan-400" /> Identity &amp; Branding</h3>
+              <p className="text-xs text-slate-300 leading-relaxed">ORBIT is the intelligence layer of SpaceGuard. Formerly SpaceGuard AI, now <strong className="text-white">ORBIT</strong> in all greetings, headers, and system prompts. Platform remains SpaceGuard; AI is ORBIT.</p>
               <div className="p-3 rounded-xl bg-slate-900 font-mono text-[11px] text-slate-200">
-                <div>Header: <span className="text-cyan-300">ORBIT</span> · <span className="text-slate-400">openrouter/free · OpenRouter</span></div>
-                <div>Launcher: <span className="text-cyan-300">ORBIT</span> Solar Telemetry Copilot</div>
+                <div>Launcher: <span className="text-cyan-300">ORBIT — Space Weather Intelligence</span></div>
                 <div>Greeting: <span className="text-slate-400">👋 Hello! I am ORBIT…</span></div>
+                <div>Reachable from: <span className="text-slate-400">Dashboard · Mission Control · Timeline</span></div>
               </div>
             </div>
 
@@ -1099,7 +1678,7 @@ document.documentElement.setAttribute('data-theme', prefs.theme);`
               <h3 className="text-sm font-bold text-white flex items-center gap-2"><Globe className="w-4 h-4 text-cyan-400" /> Model Router (Sep 2026 fix)</h3>
               <p className="text-xs text-slate-300 leading-relaxed">qwen/qwen3-8b:free is now paid-only (404). ORBIT uses resilient router with sequential fallbacks.</p>
               <code className="block p-2 rounded-lg bg-slate-900 text-cyan-300 font-mono text-[11px]">const OPENROUTER_MODEL = 'openrouter/free';<br/>const OPENROUTER_FALLBACK_MODELS = [<br/>&nbsp;&nbsp;'google/gemma-4-26b-a4b-it:free',<br/>&nbsp;&nbsp;'google/gemma-4-31b-it:free',<br/>&nbsp;&nbsp;'meta-llama/llama-3.2-3b-instruct:free',<br/>&nbsp;&nbsp;'openai/gpt-oss-20b:free'<br/>];</code>
-              <p className="text-[11px] text-slate-400 mt-1">On 404/400 model error, retries next fallback until success; surfaces auth vs model error in chat before local fallback.</p>
+              <p className="text-[11px] text-slate-400">On 404/400 model error, retries next fallback until success; surfaces auth vs model error in chat before local fallback.</p>
             </div>
           </div>
 
@@ -1115,9 +1694,9 @@ document.documentElement.setAttribute('data-theme', prefs.theme);`
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="clean-card p-6 space-y-3">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2"><ShieldAlert className="w-4 h-4 text-amber-400" /> Prompt & Conciseness (CME fix)</h3>
+              <h3 className="text-sm font-bold text-white flex items-center gap-2"><ShieldAlert className="w-4 h-4 text-amber-400" /> Prompt &amp; Conciseness (CME fix)</h3>
               <p className="text-xs text-slate-300 leading-relaxed">Simple definitions like <code className="text-cyan-400 font-mono">what are CME Events?</code> now return 80-120 words, 3-5 bullets, no tables. Live telemetry dump only when user asks <code className="text-cyan-400 font-mono">current/live/summary/status</code>.</p>
-              <code className="block p-2 rounded-lg bg-slate-900 text-slate-200 font-mono text-[11px] whitespace-pre-wrap">temperature: 0.3, max_tokens: 700{'\n'}G-scale is Kp-only: G1≥5 G2≥6 G3≥7 G4≥8 G5≥9{'\n'}CME speed / M-X flares ≠ G-scale (R-scale)</code>
+              <code className="block p-2 rounded-lg bg-slate-900 text-slate-200 font-mono text-[11px] whitespace-pre-wrap">temperature: 0.3, max_tokens: 700{'\n'}CALCULATE, don't guess — use TELEMETRY FACTS{'\n'}G-scale is Kp-only: G1≥5 G2≥6 G3≥7 G4≥8 G5≥9{'\n'}If a figure is not in the facts, say so</code>
               <p className="text-[11px] text-slate-400">Previous verbose dump (139 events + 4 tables) truncated at 450 tokens mid-sentence — now fixed.</p>
             </div>
 
@@ -1131,21 +1710,27 @@ document.documentElement.setAttribute('data-theme', prefs.theme);`
 
           <div className="clean-card p-6 space-y-3">
             <h3 className="text-sm font-bold text-white flex items-center gap-2"><Terminal className="w-4 h-4 text-cyan-400" /> Call Flow</h3>
-            <code className="block p-3 rounded-xl bg-slate-900 text-slate-200 font-mono text-[11px]">DashboardPage (lifts openRouterApiKey) → ChatbotSidebar (getEffectiveOrbitKey){'\n'}→ fetch https://openrouter.ai/api/v1/chat/completions (openrouter/free){'\n'}→ on 404 retry fallbacks → on 401/403 surface auth error → fallback local engine (ORBIT concise CME / why-G3 branches)</code>
+            <code className="block p-3 rounded-xl bg-slate-900 text-slate-200 font-mono text-[11px] whitespace-pre-wrap">handleQuery(userText){'\n'}→ resolveContext(lastIntentRef, text)          // follow-up inheritance{'\n'}→ ENGINE GATE: viz | dataQuery (conf ≥ 0.5)  // 0 API calls, exact answer{'\n'}→ buildFacts() + analysis.brief injected     // authoritative context{'\n'}→ fetch openrouter/free (700 tokens, temp 0.3){'\n'}→ on 404 retry gemma → llama → gpt-oss → on 401/403 surface error{'\n'}→ fallback generateLocalResponse()            // always answers</code>
           </div>
 
           <div className="clean-card p-6 space-y-3">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2"><Database className="w-4 h-4 text-cyan-400" /> 9-Feed DB Access & Phenomena Coverage (New)</h3>
-            <p className="text-xs text-slate-300 leading-relaxed">ORBIT local fallback now reads <code className="text-cyan-400 font-mono">data</code> (live 9 feeds: CME/FLR/GST/SEP/IPS/MPC/RBE/HSS/WSA) + <code className="text-cyan-400 font-mono">sqliteCounts</code> (persisted 10 tables) to answer <strong className="text-white">“how many in DB?”</strong>, <strong className="text-white">“list fastest CME”</strong>, <strong className="text-white">“WSA Earth arrivals”</strong> with sample rows. System prompt injects live window (9 counts, peak speed, Earth-GB, maxKp) + DB totals + 8-phenomena table + G-scale Kp-only rule.</p>
+            <h3 className="text-sm font-bold text-white flex items-center gap-2"><Database className="w-4 h-4 text-cyan-400" /> 10-Table DB Access &amp; Phenomena Coverage</h3>
+            <p className="text-xs text-slate-300 leading-relaxed">ORBIT reads <code className="text-cyan-400 font-mono">data</code> (live 9 feeds: CME/FLR/GST/SEP/IPS/MPC/RBE/HSS/WSA) + <code className="text-cyan-400 font-mono">sqliteCounts</code> (persisted 10 tables) to answer <strong className="text-white">“how many in DB?”</strong>, <strong className="text-white">“list fastest CME”</strong>, <strong className="text-white">“WSA Earth arrivals”</strong> with sample rows.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
               <code className="block p-2 rounded-lg bg-slate-900 text-cyan-300 border border-slate-800">Live: CME 141 · SEP 8 · RBE 2 · HSS 6 · IPS 10 · MPC 0 · GST n · WSA n</code>
               <code className="block p-2 rounded-lg bg-slate-900 text-purple-300 border border-slate-800">DB: cmes/flares/storms/seps/ipss/mpcs/rbes/hss/wes/queries via getSQLiteCounts()</code>
             </div>
             <ul className="space-y-1 text-[11px] text-slate-300">
               <li className="flex gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" /> Phenomena deep dives: What is MPC/RBE/HSS/WSA? Best viz per table.</li>
-              <li className="flex gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" /> List intents: “list 3 MPC” / “show HSS” → samples from live `data.mpcs/hss/rbes/wes`.</li>
-              <li className="flex gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" /> Greeting updated to 9 feeds / 8 phenomena + DB hints.</li>
+              <li className="flex gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" /> List intents: “list 3 MPC” / “show HSS” → samples from live <code>data.mpcs/hss/rbes/wes</code>.</li>
+              <li className="flex gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" /> Greeting updated to 9 feeds / 8 phenomena / 9 capabilities + DB hints.</li>
             </ul>
+          </div>
+
+          <div className="clean-card p-6 space-y-3">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2"><Code2 className="w-4 h-4 text-cyan-400" /> Module Layout</h3>
+            <code className="block p-3 rounded-xl bg-slate-900 text-slate-200 font-mono text-[11px] whitespace-pre-wrap">src/services/orbitEngine.js   // pure, synchronous, framework-free{'\n'}  FEEDS[]                    9 feeds: id field, time field, dashboard tab, units{'\n'}  classify()                 intent + confidence + feed/metric/number{'\n'}  runQuery() / stats()       filter · aggregate · rank · distribution{'\n'}  extractThreshold()         comparators AND comparatives (faster → speed &gt;){'\n'}  routeViz() / bestChartFor()  intent → view + activeTab{'\n'}  resolveContext()           follow-up inheritance{'\n'}  buildFacts()               compact facts block for the system prompt{'\n\n'}src/components/ChatbotSidebar.jsx{'\n'}  engine gate → handleVizRequest() / handleDataQuery(){'\n'}  generateLocalResponse()    legacy keyword chain (explain/db/engine/team)</code>
+            <p className="text-[11px] text-slate-400">The engine is pure and side-effect free, so it backs both the OpenRouter path and the offline fallback identically. Verified by a 37-assertion harness covering classification, threshold parsing, query execution, routing and context resolution.</p>
           </div>
         </div>
       )}
@@ -1236,7 +1821,8 @@ document.documentElement.setAttribute('data-theme', prefs.theme);`
 
         </div>
       )}
-
     </div>
-  );
+  </div>
+</div>
+);
 }

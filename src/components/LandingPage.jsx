@@ -1,449 +1,432 @@
-import React from 'react';
-import { 
-  Rocket, Zap, Activity, ShieldAlert, Cpu, ArrowRight, Sun, Bot,
-  Compass, Radio, Database, Globe, Server, BarChart3, LineChart, PieChart, Sparkles,
-  Satellite, AlertTriangle, ShieldCheck, Eye, Terminal, Layers, WifiOff, Plane, Navigation, BatteryCharging, Wind, Magnet, Orbit
+import React, { useRef } from 'react';
+import {
+  Rocket, Zap, Activity, ShieldAlert, ArrowRight, Sun, Bot,
+  Compass, Radio, Database, BarChart3, LineChart, PieChart, Sparkles,
+  Satellite, AlertTriangle, ShieldCheck, WifiOff, Navigation,
+  BatteryCharging, Wind, Magnet, Orbit, GitBranch as GitBranchIcon,
+  TrendingUp as TrendingUpIcon
 } from 'lucide-react';
+import useReveal from '../hooks/useReveal';
+
+const FEEDS = [
+  { code: 'CME', name: 'Coronal Mass Ejections', color: 'text-cyan-400' },
+  { code: 'FLR', name: 'Solar Flares', color: 'text-amber-400' },
+  { code: 'GST', name: 'Geomagnetic Storms', color: 'text-rose-400' },
+  { code: 'SEP', name: 'Energetic Particles', color: 'text-purple-400' },
+  { code: 'IPS', name: 'Interplanetary Shocks', color: 'text-emerald-400' },
+  { code: 'MPC', name: 'Magnetopause Crossings', color: 'text-indigo-400' },
+  { code: 'RBE', name: 'Radiation Belt Enhancements', color: 'text-cyan-400' },
+  { code: 'HSS', name: 'High-Speed Streams', color: 'text-sky-400' },
+  { code: 'WSA', name: 'ENLIL Forecasts', color: 'text-amber-400' }
+];
+
+const PHENOMENA = [
+  { abbr: 'CME', title: 'Coronal Mass Ejections', icon: Zap, tint: 'text-cyan-400', desc: 'Billion-ton plasma at 300–3000+ km/s, 11-col (lat/lon, half-angle, linkedEvents, WSA arrival/GB) for the 2D direction scatter & WSA arrival timeline.' },
+  { abbr: 'FLR', title: 'Solar Flares', icon: Sun, tint: 'text-amber-400', desc: 'GOES X-ray bursts A/B/C/M/X — tuple-rank sort drives the flare intensity timeline & active-region breakdown.' },
+  { abbr: 'GST', title: 'Geomagnetic Storms', icon: ShieldAlert, tint: 'text-rose-400', desc: 'Kp max-reduce (G0 <5 → G5 ≥9, Kp-only) feeding the Kp area chart and the live threat banner.' },
+  { abbr: 'SEP', title: 'Solar Energetic Particles', icon: Activity, tint: 'text-purple-400', desc: 'Relativistic protons + linked parent CME — particle-flux proxy line and Flare→CME→SEP timing bar.' },
+  { abbr: 'IPS', title: 'Interplanetary Shocks', icon: Compass, tint: 'text-emerald-400', desc: 'L1 shock fronts from ACE/DSCOVR — arrival timeline with before/after solar-wind comparison.' },
+  { abbr: 'MPC', title: 'Magnetopause Crossings', icon: Magnet, tint: 'text-indigo-400', desc: 'SWMF-modelled eventTime + linkedEvents for the MPC timeline and the MPC+HSS+GST multi-line.' },
+  { abbr: 'RBE', title: 'Radiation Belt Enhancements', icon: Radio, tint: 'text-cyan-400', desc: 'GOES-P >2 MeV electrons — daily RBE count as an electron-flux proxy, charted against HSS and GST.' },
+  { abbr: 'HSS', title: 'High-Speed Streams', icon: Wind, tint: 'text-sky-400', desc: 'Coronal-hole wind at 500–800 km/s — daily HSS count and speed-vs-time line.' },
+  { abbr: 'WSA', title: 'WSA-ENLIL Forecasts', icon: Orbit, tint: 'text-amber-400', desc: 'Cone inputs lat/lon/speed/halfAngle → arrival, Kp and rmin_re, flattened per simulationID::cmeID for the Earth-arrival timeline.' }
+];
+
+const HAZARDS = [
+  { icon: BatteryCharging, tint: 'text-amber-400', title: 'Power Grid Transformers', desc: 'Geomagnetically Induced Currents from extreme storms can saturate high-voltage transformer cores, causing blackouts and grid failure.' },
+  { icon: Navigation, tint: 'text-cyan-400', title: 'GNSS & GPS Precision', desc: 'Ionospheric scintillations delay and refract L-band signals, producing positioning errors for aviation, maritime and defence navigation.' },
+  { icon: Satellite, tint: 'text-purple-400', title: 'Satellite Orbital Drag', desc: 'Extreme UV and X-ray heating expands the upper thermosphere, dramatically increasing atmospheric drag on LEO satellites and stations.' },
+  { icon: WifiOff, tint: 'text-rose-400', title: 'HF Radio Communications', desc: 'Solar flares ionise the ionospheric D-layer, causing total high-frequency radio blackouts across the sunlit side for hours.' }
+];
+
+const ORBIT_PILLARS = [
+  { icon: Database, tint: 'text-cyan-400', title: '10-Table DB Access', desc: 'Reads live data plus persisted sqliteCounts — CME/FLR/GST/SEP/IPS/MPC/RBE/HSS/WSA and the query cache. Try “list 3 MPC” or “DB totals”.' },
+  { icon: Sparkles, tint: 'text-purple-400', title: '8 Phenomena Expert', desc: 'Plain-language answers on RBE, HSS, MPC and WSA-ENLIL, each with the best visualisation for that table.' },
+  { icon: Bot, tint: 'text-amber-400', title: 'Resilient Router', desc: 'openrouter/free auto-picks the best free model, with sequential Gemma → Llama → GPT-OSS fallbacks on 404.' },
+  { icon: GitBranchIcon, tint: 'text-teal-400', title: 'Causal Chain Reasoning', desc: 'Reconstructs Flare → CME → Solar Wind → Storm → Radiation sequences, so “why did the storm happen?” gets the real timeline.' },
+  { icon: TrendingUpIcon, tint: 'text-emerald-400', title: 'Statistics & Correlations', desc: 'Pearson r for CME speed vs. peak Kp, linear trend slopes, flare→CME and SEP→parent linkage rates, chain completeness.' },
+  { icon: AlertTriangle, tint: 'text-rose-400', title: 'Anomaly & Threat Watch', desc: 'Flags velocity and Kp outliers, Kp≥7 storms, X-class flares and hazard-score escalation before you go looking for it.' }
+];
+
+const PIPELINE = [
+  { n: '01', title: 'NASA DONKI', tint: 'text-cyan-400', desc: 'Nine REST endpoints — CME, FLR, GST, SEP, IPS, MPC, RBE, HSS, WSAEnlilSimulations — fanned out in parallel with a 120s barrier.' },
+  { n: '02', title: 'Scala 3 Engine', tint: 'text-amber-400', desc: 'Future-based 9-way fan-out plus 9 algorithms: trajectory, GOES ranking, Kp reduction, statistics, persistence, binning, theming.' },
+  { n: '03', title: 'SQLite × 10', tint: 'text-purple-400', desc: '9 feed tables plus a query cache, ACID idempotent writes, 11-column CME records and flattened WSA-ENLIL rows.' },
+  { n: '04', title: 'Render & Reason', tint: 'text-cyan-300', desc: 'ECharts visualises 15+ palette-aware charts; ORBIT reasons over the same telemetry layer to answer in plain language.' }
+];
+
+const SCALES = [
+  { tag: 'G', range: 'G1 – G5', title: 'Geomagnetic Storms', tint: 'text-rose-300', bar: 'from-rose-500/70', desc: 'Driven by CME plasma impact. G1 causes weak grid fluctuations; G5 collapses transformers and drags aurora to the equator.' },
+  { tag: 'R', range: 'R1 – R5', title: 'Radio Blackouts', tint: 'text-amber-300', bar: 'from-amber-500/70', desc: 'Driven by X-ray solar flares. R1 degrades HF comms; R5 blacks out HF entirely across the sunlit hemisphere.' },
+  { tag: 'S', range: 'S1 – S5', title: 'Radiation Storms', tint: 'text-purple-300', bar: 'from-purple-500/70', desc: 'Driven by high-energy SEP protons. S1 is minor satellite noise; S5 is an unavoidable hazard for astronauts and polar flight.' }
+];
+
+const CHARTS = [
+  { icon: BarChart3, tint: 'text-cyan-400', title: 'CME Velocity & 2D Direction', desc: 'Speed bars plus the lat/lon scatter — bubble area encodes angular width, colour encodes speed across all 6 palettes.' },
+  { icon: PieChart, tint: 'text-amber-400', title: 'Flare & Flux Timelines', desc: 'GOES class donut and rank timeline, with daily count proxies standing in for SEP particle flux, RBE electron flux and HSS wind speed.' },
+  { icon: LineChart, tint: 'text-rose-400', title: 'Kp & Multi-Source Lines', desc: 'Kp area with G1/G3/G5 markers, the five-line geomagnetic overlay, and the stage-to-stage flow Sankey.' }
+];
 
 export default function LandingPage({ setCurrentView }) {
+  const pageRef = useRef(null);
+  useReveal(pageRef);
+
   return (
-    <div className="space-y-16 py-8 text-slate-100">
-      
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-16 px-6 lg:px-12 rounded-3xl clean-card bg-slate-900/80 border border-slate-800 shadow-2xl">
-        <div className="relative max-w-4xl mx-auto text-center space-y-6">
-          
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-950/80 border border-cyan-700/60 text-cyan-300 text-xs font-semibold shadow-inner">
-            <Radio className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-            NASA DONKI Telemetry & Space Weather Engine
+    <div ref={pageRef} className="space-y-28 sm:space-y-36 py-8 text-slate-100">
+
+      {/* ================= HERO ================= */}
+      <section className="sg-panel overflow-hidden px-6 sm:px-12 py-20 sm:py-28 text-center">
+        {/* Aurora wash — the page's only large decorative layer */}
+        <div className="sg-aurora bg-gradient-to-br from-cyan-500/20 via-violet-500/15 to-emerald-500/10" />
+        <div className="sg-aurora bg-gradient-to-tr from-fuchsia-500/10 via-transparent to-cyan-400/15" style={{ animationDelay: '-9s' }} />
+
+        <div className="relative max-w-4xl mx-auto space-y-8">
+          <div data-reveal className="sg-chip">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75 animate-ping" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-400" />
+            </span>
+            NASA DONKI Telemetry &amp; Space Weather Engine
           </div>
 
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight font-sans leading-tight">
-            Space Weather Intelligence & <br />
-            <span className="bg-gradient-to-r from-teal-400 via-cyan-300 to-emerald-400 bg-clip-text text-transparent">
-              Solar Telemetry Dashboard
-            </span>
+          <h1
+            data-reveal
+            style={{ '--reveal-delay': '80ms' }}
+            className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight font-sans leading-[1.05]"
+          >
+            <span className="text-white">Space Weather</span><br />
+            <span className="sg-gradient-text">Intelligence, in Real Time</span>
           </h1>
 
-          <p className="text-base sm:text-lg text-slate-300 max-w-3xl mx-auto leading-relaxed">
-            Real-time intelligence — <strong className="text-white">9 DONKI feeds → 8 phenomena</strong> via NASA GSFC + CCMC Kauai, <strong className="text-white">Scala 3 9-way parallel</strong> engine (8 algorithms, 11-col CME), <strong className="text-white">ECharts 5 + live deep galaxy</strong> (purple/pink/blue, no image) and <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-950/70 text-cyan-300 border border-cyan-700/60 text-xs font-bold align-middle"><Bot className="w-3 h-3" /> ORBIT AI — 9-table DB</span> <strong className="text-white">openrouter/free</strong> auto-router.
+          <p
+            data-reveal
+            style={{ '--reveal-delay': '160ms' }}
+            className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed"
+          >
+            Nine DONKI feeds from NASA GSFC and CCMC Kauai, pulled in parallel by a
+            Scala 3 engine, persisted to SQLite, and rendered as fifteen-plus live
+            charts — with <span className="text-cyan-300 font-semibold">ORBIT</span>,
+            a copilot that reads the same telemetry you do.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+          <div data-reveal style={{ '--reveal-delay': '240ms' }} className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
             <button
               onClick={() => setCurrentView('dashboard')}
-              className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/25 transition-all"
+              className="group w-full sm:w-auto px-8 py-4 rounded-full bg-white text-slate-900 font-bold text-sm flex items-center justify-center gap-2 transition-all duration-300 hover:gap-3.5 hover:shadow-[0_0_40px_-8px_rgba(34,211,238,0.7)]"
             >
               <Database className="w-4 h-4" />
               Launch Main Dashboard
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5" />
             </button>
-
             <button
               onClick={() => setCurrentView('docs')}
-              className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-200 font-semibold text-xs flex items-center justify-center gap-2 transition-all"
+              className="w-full sm:w-auto px-8 py-4 rounded-full text-slate-300 font-semibold text-sm sg-underline hover:text-white transition-colors duration-300"
             >
-              <Cpu className="w-4 h-4 text-cyan-400" />
-              Engine Specs & Theory
+              Read the Engine Specs
             </button>
           </div>
-
-          {/* Quick Stat Badges — 9 live DONKI feeds */}
-          <div className="pt-8 border-t border-slate-800 grid grid-cols-3 sm:grid-cols-9 gap-2 text-xs text-left">
-            <div className="p-2.5 rounded-2xl bg-slate-950/70 border border-slate-800/90">
-              <span className="text-slate-500 text-[9px] uppercase font-bold block">FEED 1</span>
-              <span className="text-cyan-400 font-bold text-xs">CME</span>
-              <span className="text-slate-400 text-[10px] block leading-none">Coronal Ejections</span>
-            </div>
-            <div className="p-2.5 rounded-2xl bg-slate-950/70 border border-slate-800/90">
-              <span className="text-slate-500 text-[9px] uppercase font-bold block">FEED 2</span>
-              <span className="text-amber-400 font-bold text-xs">FLR</span>
-              <span className="text-slate-400 text-[10px] block leading-none">Solar Flares</span>
-            </div>
-            <div className="p-2.5 rounded-2xl bg-slate-950/70 border border-slate-800/90">
-              <span className="text-slate-500 text-[9px] uppercase font-bold block">FEED 3</span>
-              <span className="text-rose-400 font-bold text-xs">GST</span>
-              <span className="text-slate-400 text-[10px] block leading-none">Geomagnetic Storms</span>
-            </div>
-            <div className="p-2.5 rounded-2xl bg-slate-950/70 border border-slate-800/90">
-              <span className="text-slate-500 text-[9px] uppercase font-bold block">FEED 4</span>
-              <span className="text-purple-400 font-bold text-xs">SEP</span>
-              <span className="text-slate-400 text-[10px] block leading-none">Energetic Particles</span>
-            </div>
-            <div className="p-2.5 rounded-2xl bg-slate-950/70 border border-slate-800/90">
-              <span className="text-slate-500 text-[9px] uppercase font-bold block">FEED 5</span>
-              <span className="text-emerald-400 font-bold text-xs">IPS</span>
-              <span className="text-slate-400 text-[10px] block leading-none">Interplanetary Shocks</span>
-            </div>
-            <div className="p-2.5 rounded-2xl bg-slate-950/70 border border-slate-800/90">
-              <span className="text-slate-500 text-[9px] uppercase font-bold block">FEED 6</span>
-              <span className="text-indigo-400 font-bold text-xs">MPC</span>
-              <span className="text-slate-400 text-[10px] block leading-none">Magnetopause</span>
-            </div>
-            <div className="p-2.5 rounded-2xl bg-slate-950/70 border border-slate-800/90">
-              <span className="text-slate-500 text-[9px] uppercase font-bold block">FEED 7</span>
-              <span className="text-cyan-400 font-bold text-xs">RBE</span>
-              <span className="text-slate-400 text-[10px] block leading-none">Radiation Belt</span>
-            </div>
-            <div className="p-2.5 rounded-2xl bg-slate-950/70 border border-slate-800/90">
-              <span className="text-slate-500 text-[9px] uppercase font-bold block">FEED 8</span>
-              <span className="text-sky-400 font-bold text-xs">HSS</span>
-              <span className="text-slate-400 text-[10px] block leading-none">High-Speed Streams</span>
-            </div>
-            <div className="p-2.5 rounded-2xl bg-slate-950/70 border border-cyan-700/40 bg-cyan-950/20">
-              <span className="text-cyan-500 text-[9px] uppercase font-bold block">FEED 9</span>
-              <span className="text-amber-400 font-bold text-xs">WSA</span>
-              <span className="text-slate-400 text-[10px] block leading-none">ENLIL Forecasts</span>
-            </div>
-          </div>
-
         </div>
       </section>
 
-      {/* ORBIT Special Mention — DB-aware 9-feed copilot */}
-      <section className="clean-card p-8 sm:p-10 space-y-6 bg-gradient-to-br from-cyan-950/30 via-slate-900/80 to-indigo-950/30 border border-cyan-700/30 shadow-[0_0_50px_rgba(6,182,212,0.12)] relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-transparent to-purple-500/5 pointer-events-none" />
-        <div className="relative text-center max-w-3xl mx-auto space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 text-cyan-300 border border-cyan-600/60 text-xs font-bold">
-            <Bot className="w-3.5 h-3.5 text-cyan-400" />
-            SPECIAL MENTION — ORBIT AI COPILOT
-            <span className="px-2 py-0.5 rounded-full bg-slate-900 text-cyan-300 border border-cyan-700/40 font-mono text-[10px]">openrouter/free</span>
+      {/* ================= LIVE FEED TICKER ================= */}
+      <section className="sg-strip relative rounded-2xl overflow-hidden py-4" aria-label="NASA DONKI feeds monitored">
+        <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-slate-950 to-transparent z-10 pointer-events-none" />
+        <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-slate-950 to-transparent z-10 pointer-events-none" />
+        <div className="sg-marquee">
+          <div className="sg-marquee-track">
+            {[...FEEDS, ...FEEDS].map((f, i) => (
+              <span key={`${f.code}-${i}`} className="flex items-center gap-3 px-8 whitespace-nowrap">
+                <span className={`px-2 py-0.5 rounded-md bg-slate-900/70 border border-slate-700/70 text-sm font-bold font-mono ${f.color}`}>{f.code}</span>
+                <span className="text-sm text-slate-400">{f.name}</span>
+                <span className="w-1 h-1 rounded-full bg-slate-700" />
+              </span>
+            ))}
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-sans">
-            Meet <span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">ORBIT</span> — Your 9-Feed DB-Aware Copilot
-          </h2>
-          <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-            Not just a chatbot — <strong className="text-white">ORBIT reads your live 9-feed window + persisted 10-table DB</strong> to answer <em>“how many in DB?”</em>, <em>“list fastest CME”</em>, <em>“WSA Earth arrivals?”</em> and explain any of the <strong className="text-white">8 phenomena</strong> with best-visualization guidance. Auto-routed via <code className="text-cyan-300 font-mono">openrouter/free</code> → Gemma/Llama/GPT-OSS fallbacks (700 tokens, Kp-only G-scale).
-          </p>
-        </div>
-        <div className="relative grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 rounded-2xl bg-slate-950/70 border border-cyan-800/30 space-y-2">
-            <div className="w-8 h-8 rounded-xl bg-cyan-950/80 text-cyan-400 border border-cyan-700/40 flex items-center justify-center"><Database className="w-4 h-4" /></div>
-            <h3 className="text-sm font-bold text-white">9-Table DB Access</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">Live `data.*` + `sqliteCounts` — CME/FLR/GST/SEP/IPS/MPC/RBE/HSS/WSA. Try “list 3 MPC” or “DB totals”.</p>
-          </div>
-          <div className="p-4 rounded-2xl bg-slate-950/70 border border-purple-800/30 space-y-2">
-            <div className="w-8 h-8 rounded-xl bg-purple-950/80 text-purple-400 border border-purple-700/40 flex items-center justify-center"><Sparkles className="w-4 h-4" /></div>
-            <h3 className="text-sm font-bold text-white">8 Phenomena Expert</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">What is RBE/HSS/MPC/WSA? Best viz per table — flux proxies, 2D direction scatter, WSA arrival timeline.</p>
-          </div>
-          <div className="p-4 rounded-2xl bg-slate-950/70 border border-amber-800/30 space-y-2">
-            <div className="w-8 h-8 rounded-xl bg-amber-950/80 text-amber-400 border border-amber-700/40 flex items-center justify-center"><Bot className="w-4 h-4" /></div>
-            <h3 className="text-sm font-bold text-white">Resilient Router</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">`openrouter/free` auto-picks best free model; sequential fallbacks `gemma-4-26b → llama-3.2 → gpt-oss-20b` on 404.</p>
-          </div>
-        </div>
-        <div className="relative flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-          <button onClick={() => setCurrentView('dashboard')} className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md">
-            <Bot className="w-4 h-4" /> Launch ORBIT in Dashboard
-            <ArrowRight className="w-4 h-4" />
-          </button>
-          <span className="text-[10px] text-slate-500 font-mono">Settings → ORBIT AI Copilot to set key · No key = local engine</span>
         </div>
       </section>
 
-      {/* Why Space Weather Matters Section */}
-      <section className="clean-card p-8 sm:p-10 space-y-8 bg-slate-900/80 border border-slate-800">
-        <div className="text-center max-w-2xl mx-auto space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-950/70 text-rose-300 border border-rose-800/60 text-xs font-semibold">
-            <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
-            Planetary Impact & Terrestrial Hazards
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white font-sans">
-            Why Space Weather Intelligence is Critical
+      {/* ================= PHENOMENA ================= */}
+      <section className="sg-panel p-8 sm:p-12 space-y-14">
+        <div data-reveal className="max-w-2xl space-y-4">
+          <span className="sg-chip">Coverage</span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-white font-sans leading-tight">
+            Nine feeds, eight phenomena,<br className="hidden sm:block" /> one timeline
           </h2>
-          <p className="text-slate-400 text-xs sm:text-sm">
-            Solar disturbances trigger severe geomagnetic, radiation, and ionospheric storms that directly impact modern technological infrastructure on Earth and in orbit.
+          <p className="text-slate-400 text-sm leading-relaxed">
+            Every observation DONKI publishes is ingested, reduced, and mapped onto a
+            phenomenon view — from a fast CME's launch coordinates to the geomagnetic
+            storm it eventually triggers.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2.5">
-            <div className="w-9 h-9 rounded-xl bg-amber-950/70 text-amber-400 border border-amber-800/60 flex items-center justify-center">
-              <BatteryCharging className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-bold text-white">Power Grid Transformers</h3>
-            <p className="text-xs text-slate-400 leading-relaxed font-sans">
-              Geomagnetically Induced Currents (GICs) from extreme storms can saturate high-voltage transformer cores, causing blackouts and grid failure.
-            </p>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2.5">
-            <div className="w-9 h-9 rounded-xl bg-cyan-950/70 text-cyan-400 border border-cyan-800/60 flex items-center justify-center">
-              <Navigation className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-bold text-white">GNSS & GPS Precision</h3>
-            <p className="text-xs text-slate-400 leading-relaxed font-sans">
-              Ionospheric scintillations delay and refract L-band satellite signals, resulting in positioning errors for aviation, maritime, and defense navigation.
-            </p>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2.5">
-            <div className="w-9 h-9 rounded-xl bg-purple-950/70 text-purple-400 border border-purple-800/60 flex items-center justify-center">
-              <Satellite className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-bold text-white">Satellite Orbital Drag</h3>
-            <p className="text-xs text-slate-400 leading-relaxed font-sans">
-              Extreme UV and X-ray heating expands the upper thermosphere, dramatically increasing atmospheric drag on LEO satellites and space stations.
-            </p>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2.5">
-            <div className="w-9 h-9 rounded-xl bg-rose-950/70 text-rose-400 border border-rose-800/60 flex items-center justify-center">
-              <WifiOff className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-bold text-white">HF Radio Communications</h3>
-            <p className="text-xs text-slate-400 leading-relaxed font-sans">
-              Solar flares ionize the ionospheric D-layer, causing total High-Frequency (HF) radio blackouts across the sunlit side of the planet for hours.
-            </p>
-          </div>
-        </div>
+        {/* Translucent rows with hairline borders — lifts and glows on hover */}
+        <ul className="space-y-2.5">
+          {PHENOMENA.map((p, i) => {
+            const Icon = p.icon;
+            return (
+              <li
+                key={p.abbr}
+                data-reveal="up"
+                style={{ '--reveal-delay': `${Math.min(i, 6) * 60}ms` }}
+                className="sg-row group"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-8 py-4 sm:py-5 px-4 sm:px-6">
+                  <div className="flex items-center gap-3 sm:w-52 sm:shrink-0">
+                    <Icon className={`w-5 h-5 ${p.tint} transition-transform duration-300 group-hover:scale-110`} />
+                    <span className={`font-mono text-sm font-bold ${p.tint}`}>{p.abbr}</span>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-bold text-white sm:w-60 sm:shrink-0">{p.title}</h3>
+                  <p className="text-sm text-slate-400 leading-relaxed">{p.desc}</p>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       </section>
 
-      {/* 9 DONKI Feeds → 8 Phenomena Grid — latest */}
-      <section className="space-y-6">
-        <div className="text-center max-w-2xl mx-auto space-y-2">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white font-sans">
-            9 DONKI Feeds → 8 Phenomena Monitored
-          </h2>
-          <p className="text-slate-400 text-xs sm:text-sm">
-            SpaceGuard ingests 9 real-time feeds (CME, FLR, GST, SEP, IPS, MPC, RBE, HSS, WSA-ENLIL) from NASA GSFC + CCMC Kauai — mapped to 8 phenomena for dashboard.
-          </p>
-        </div>
+      {/* ================= ORBIT ================= */}
+      <section className="sg-panel sg-panel-glow overflow-hidden p-8 sm:p-12 space-y-14">
+        <div className="sg-aurora bg-gradient-to-tr from-violet-500/15 via-transparent to-cyan-500/15" />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          <div className="clean-card p-6 space-y-3 hover:border-cyan-500/60 bg-slate-900/80 border border-slate-800 transition-all">
-            <div className="w-10 h-10 rounded-xl bg-cyan-950/70 text-cyan-400 border border-cyan-800/60 flex items-center justify-center">
-              <Zap className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-white">Coronal Mass Ejections (CME)</h3>
-            <p className="text-slate-400 text-xs leading-relaxed">
-              Billion-ton plasma at 300–3000+ km/s, 11-col (lat/lon, half-angle, linkedEvents, WSA arrival/GB) for 2D direction scatter & WSA timeline.
-            </p>
-          </div>
-
-          <div className="clean-card p-6 space-y-3 hover:border-amber-500/60 bg-slate-900/80 border border-slate-800 transition-all">
-            <div className="w-10 h-10 rounded-xl bg-amber-950/70 text-amber-400 border border-amber-800/60 flex items-center justify-center">
-              <Sun className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-white">Solar Flares (FLR)</h3>
-            <p className="text-slate-400 text-xs leading-relaxed">
-              GOES X-ray bursts A/B/C/M/X — tuple-rank sort for intensity timeline & active-region bar.
-            </p>
-          </div>
-
-          <div className="clean-card p-6 space-y-3 hover:border-rose-500/60 bg-slate-900/80 border border-slate-800 transition-all">
-            <div className="w-10 h-10 rounded-xl bg-rose-950/70 text-rose-400 border border-rose-800/60 flex items-center justify-center">
-              <ShieldAlert className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-white">Geomagnetic Storms (GST)</h3>
-            <p className="text-slate-400 text-xs leading-relaxed">
-              Kp max-reduce (G0&lt;5→G5≥9 Kp-only) for Kp area chart + threat banner.
-            </p>
-          </div>
-
-          <div className="clean-card p-6 space-y-3 hover:border-purple-500/60 bg-slate-900/80 border border-slate-800 transition-all">
-            <div className="w-10 h-10 rounded-xl bg-purple-950/70 text-purple-400 border border-purple-800/60 flex items-center justify-center">
-              <Activity className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-white">Solar Energetic Particles (SEP)</h3>
-            <p className="text-slate-400 text-xs leading-relaxed">
-              Relativistic protons + linked CME — flux proxy daily line & Flare→CME→SEP timing bar.
-            </p>
-          </div>
-
-          <div className="clean-card p-6 space-y-3 hover:border-cyan-500/60 bg-slate-900/80 border border-slate-800 transition-all">
-            <div className="w-10 h-10 rounded-xl bg-cyan-950/70 text-cyan-400 border border-cyan-800/60 flex items-center justify-center">
-              <Compass className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-white">Interplanetary Shocks (IPS)</h3>
-            <p className="text-slate-400 text-xs leading-relaxed">
-              L1 shocks (ACE/DSCOVR) — arrival timeline + before/after wind bar.
-            </p>
-          </div>
-
-          <div className="clean-card p-6 space-y-3 hover:border-indigo-500/60 bg-slate-900/80 border border-slate-800 transition-all">
-            <div className="w-10 h-10 rounded-xl bg-indigo-950/70 text-indigo-400 border border-indigo-800/60 flex items-center justify-center">
-              <Magnet className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-white">Magnetopause Crossings (MPC)</h3>
-            <p className="text-slate-400 text-xs leading-relaxed">
-              SWMF model — eventTime + linkedEvents for MPC timeline & MPC+HSS+GST multi-line.
-            </p>
-          </div>
-
-          <div className="clean-card p-6 space-y-3 hover:border-cyan-500/60 bg-slate-900/80 border border-slate-800 transition-all">
-            <div className="w-10 h-10 rounded-xl bg-cyan-950/70 text-cyan-400 border border-cyan-800/60 flex items-center justify-center">
-              <Radio className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-white">Radiation Belt Enhancements (RBE)</h3>
-            <p className="text-slate-400 text-xs leading-relaxed">
-              GOES-P &gt;2 MeV electrons — daily RBE count as flux proxy + HSS/RBE/GST.
-            </p>
-          </div>
-
-          <div className="clean-card p-6 space-y-3 hover:border-sky-500/60 bg-slate-900/80 border border-slate-800 transition-all">
-            <div className="w-10 h-10 rounded-xl bg-sky-950/70 text-sky-400 border border-sky-800/60 flex items-center justify-center">
-              <Wind className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-white">High-Speed Streams (HSS)</h3>
-            <p className="text-slate-400 text-xs leading-relaxed">
-              Coronal-hole wind 500–800 km/s — daily HSS speed vs time line.
-            </p>
-          </div>
-
-          <div className="clean-card p-6 space-y-3 hover:border-amber-500/60 bg-slate-900/80 border border-slate-800 transition-all md:col-span-3 lg:col-span-1">
-            <div className="w-10 h-10 rounded-xl bg-amber-950/70 text-amber-400 border border-amber-800/60 flex items-center justify-center">
-              <Orbit className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-white">WSA-ENLIL Forecasts</h3>
-            <p className="text-slate-400 text-xs leading-relaxed">
-              Cone inputs lat/lon/speed/halfAngle → arrival/Kp/rmin_re, flattened simulationID::cmeID for Earth-arrival timeline & 2D scatter.
-            </p>
-          </div>
-
-        </div>
-      </section>
-
-      {/* Apache ECharts Visualization Section — 8 phenomena, 6 palettes, live galaxy */}
-      <section className="clean-card p-8 sm:p-10 space-y-6 bg-slate-900/80 border border-slate-800">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-800 pb-6">
-          <div className="space-y-1">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/70 text-cyan-300 border border-cyan-800/60 text-xs font-semibold">
-              <BarChart3 className="w-3.5 h-3.5 text-cyan-400" />
-              ECharts Suite — 8 Phenomena • 15+ Charts • 6 Palettes
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-white">
-              High-Performance Reactive Visualizations
+        <div className="relative space-y-14">
+          <div data-reveal className="max-w-2xl space-y-5">
+            <span className="sg-chip">
+              <Bot className="w-3.5 h-3.5" />
+              The Copilot
+            </span>
+            <h2 className="text-3xl sm:text-5xl font-extrabold text-white font-sans leading-tight">
+              Meet <span className="sg-gradient-text">ORBIT</span>
             </h2>
-            <p className="text-xs text-slate-400">CME speed/direction scatter • FLR rank • Kp area • daily timelines (SEP/RBE/HSS/MPC/IPS) • WSA arrival • multi-source lines — all palette-aware</p>
-          </div>
-          <button
-            onClick={() => setCurrentView('dashboard')}
-            className="px-4 py-2 rounded-xl bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/60 text-xs font-bold flex items-center gap-2 transition-all shadow-sm"
-          >
-            View Live Charts
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-3">
-            <div className="w-9 h-9 rounded-xl bg-cyan-950/70 text-cyan-400 border border-cyan-800/60 flex items-center justify-center">
-              <BarChart3 className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-bold text-white">CME Velocity + 2D Direction</h3>
-            <p className="text-xs text-slate-400 leading-relaxed font-sans">
-              11-col CME (lat/lon/GB) — speed bar + lat vs lon scatter (bubble=halfAngle, color=speed) + WSA arrival timeline, all 6 palettes.
+            <p className="text-slate-300 text-base leading-relaxed">
+              Not a chat window bolted onto a dashboard. ORBIT is wired to the same{' '}
+              <code className="text-cyan-300 font-mono text-sm">telemetryAnalysis</code> layer
+              that drives Mission Control and the Event Relationship Timeline, so it reasons
+              over your actual rows — answering <em>“why did the storm happen?”</em> with the
+              real chain, not a generic paragraph.
+            </p>
+            <p className="text-slate-500 text-sm leading-relaxed">
+              Auto-routed through <code className="text-cyan-300 font-mono text-sm">openrouter/free</code>{' '}
+              with sequential model fallbacks, and a local analysis engine when no key is set —
+              so it always answers, even offline.
             </p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-950/70 text-amber-400 border border-amber-800/60 flex items-center justify-center">
-              <PieChart className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-bold text-white">FLR & RBE/HSS Timelines</h3>
-            <p className="text-xs text-slate-400 leading-relaxed font-sans">
-              GOES donut + rank timeline for flares; daily count proxies for SEP (particle flux) / RBE (electron flux) / HSS (wind speed).
-            </p>
+          {/* Pillars as translucent cells on a wide grid — no nested cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {ORBIT_PILLARS.map((o, i) => {
+              const Icon = o.icon;
+              return (
+                <div
+                  key={o.title}
+                  data-reveal="up"
+                  style={{ '--reveal-delay': `${(i % 3) * 90}ms` }}
+                  className="sg-row sg-row-lift group p-5 space-y-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="relative flex h-9 w-9 items-center justify-center">
+                      <span className="sg-ping-ring absolute inset-0" />
+                      <Icon className={`w-5 h-5 ${o.tint} relative`} />
+                    </span>
+                    <h3 className="sg-underline text-base font-bold text-white">{o.title}</h3>
+                  </div>
+                  <p className="text-sm text-slate-400 leading-relaxed">{o.desc}</p>
+                </div>
+              );
+            })}
           </div>
 
-          <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-3">
-            <div className="w-9 h-9 rounded-xl bg-rose-950/70 text-rose-400 border border-rose-800/60 flex items-center justify-center">
-              <LineChart className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-bold text-white">Kp + Multi-Source Timelines</h3>
-            <p className="text-xs text-slate-400 leading-relaxed font-sans">
-              Kp area with G1/G3/G5 marks + geomagnetic 5-line (CME+IPS+HSS+MPC+GST) + HSS/RBE/GST & MPC/HSS/GST multi-lines.
-            </p>
+          <div data-reveal className="flex flex-col sm:flex-row items-center gap-4 pt-2">
+            <button
+              onClick={() => setCurrentView('dashboard')}
+              className="group px-7 py-3.5 rounded-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-sm flex items-center gap-2.5 transition-all duration-300 hover:gap-3.5 hover:shadow-[0_0_36px_-6px_rgba(34,211,238,0.6)]"
+            >
+              <Bot className="w-4 h-4" />
+              Launch ORBIT
+              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+            </button>
+            <span className="text-[11px] text-slate-600 font-mono">
+              Settings → ORBIT AI Copilot to add a key
+            </span>
           </div>
         </div>
       </section>
 
-      {/* NOAA Space Weather Scales Overview */}
-      <section className="clean-card p-8 sm:p-10 space-y-6 bg-slate-900/80 border border-slate-800">
-        <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
-          <div className="p-2.5 rounded-xl bg-amber-950/70 text-amber-400 border border-amber-800/60">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-white">Official NOAA Space Weather Scales</h2>
-            <p className="text-xs text-slate-400">Standardized hazard classifications for space environment disturbances</p>
-          </div>
+      {/* ================= IMPACT ================= */}
+      <section className="sg-panel p-8 sm:p-12 space-y-14">
+        <div data-reveal className="max-w-2xl space-y-4">
+          <span className="sg-chip !border-rose-500/30 !bg-rose-950/50 !text-rose-200">Why it matters</span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-white font-sans leading-tight">
+            When the Sun misbehaves, this is what breaks
+          </h2>
+          <p className="text-slate-400 text-sm leading-relaxed">
+            Solar disturbances are not abstract. They reach the ground as induced currents,
+            refracted navigation signals, atmospheric drag and radio blackouts.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2">
-            <span className="text-xs font-bold font-mono px-2.5 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-800/60">
-              G-Scale (G1 to G5)
-            </span>
-            <h4 className="text-sm font-bold text-white">Geomagnetic Storms</h4>
-            <p className="text-xs text-slate-400 leading-relaxed font-sans">
-              Driven by CME plasma impact. Ranges from G1 (Minor: weak power grid fluctuations) to G5 (Extreme: complete transformer collapse and aurora seen at equator).
-            </p>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2">
-            <span className="text-xs font-bold font-mono px-2.5 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800/60">
-              R-Scale (R1 to R5)
-            </span>
-            <h4 className="text-sm font-bold text-white">Radio Blackouts</h4>
-            <p className="text-xs text-slate-400 leading-relaxed font-sans">
-              Driven by X-ray solar flares. Ranges from R1 (Minor: degraded HF comms) to R5 (Extreme: complete HF blackout across entire sunlit hemisphere).
-            </p>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2">
-            <span className="text-xs font-bold font-mono px-2.5 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800/60">
-              S-Scale (S1 to S5)
-            </span>
-            <h4 className="text-sm font-bold text-white">Solar Radiation Storms</h4>
-            <p className="text-xs text-slate-400 leading-relaxed font-sans">
-              Driven by high-energy SEP protons. Ranges from S1 (Minor: minor satellite noise) to S5 (Extreme: unavoidable radiation hazard for astronauts and polar flights).
-            </p>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {HAZARDS.map((h, i) => {
+            const Icon = h.icon;
+            return (
+              <div
+                key={h.title}
+                data-reveal="up"
+                style={{ '--reveal-delay': `${(i % 2) * 100}ms` }}
+                className="sg-row sg-row-lift group flex gap-4 p-5"
+              >
+                <Icon className={`w-5 h-5 shrink-0 mt-0.5 ${h.tint} transition-transform duration-300 group-hover:-translate-y-0.5`} />
+                <div className="space-y-2">
+                  <h3 className="text-base font-bold text-white">{h.title}</h3>
+                  <p className="text-sm text-slate-400 leading-relaxed">{h.desc}</p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
 
-      {/* Scala Engine Pipeline — 9 feeds, 8 algorithms, live galaxy, ORBIT */}
-      <section className="clean-card p-8 sm:p-10 space-y-6 bg-slate-900/80 border border-slate-800">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-800 pb-6">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800 text-slate-300 text-xs font-semibold mb-2">
-              <Server className="w-3.5 h-3.5 text-cyan-400" />
-              Scala 3 Data Pipeline — 9 feeds • 8 algorithms
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-white">
-              Powered by Scala 3 Engine (<code className="text-cyan-400 font-mono text-lg">V9.scala</code>) + ORBIT
+      {/* ================= PIPELINE ================= */}
+      <section className="sg-panel p-8 sm:p-12 space-y-14">
+        <div data-reveal className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div className="max-w-2xl space-y-4">
+            <span className="sg-chip !border-amber-500/30 !bg-amber-950/50 !text-amber-200">Under the hood</span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white font-sans leading-tight">
+              From NASA sensor to SQLite in four steps
             </h2>
-            <p className="text-xs text-slate-400 mt-1">9-way Future fan-out, 11-col CME (lat/lon/GB), WSA flattened <code className="text-cyan-300 font-mono">simulationID::cmeID</code>, 10-table SQLite, daily binning & theming</p>
+            <p className="text-slate-400 text-sm leading-relaxed">
+              A Scala 3 engine fans out across nine endpoints, reduces each feed with
+              dedicated algorithms, persists idempotently, and hands the result to the charts.
+            </p>
           </div>
           <button
             onClick={() => setCurrentView('docs')}
-            className="px-4 py-2 rounded-xl bg-cyan-950 hover:bg-teal-900 text-cyan-300 border border-cyan-700/60 text-xs font-bold flex items-center gap-2 transition-all shadow-sm"
+            className="group shrink-0 text-sm font-semibold text-cyan-300 sg-underline hover:text-cyan-200 transition-colors flex items-center gap-2 self-start"
           >
-            Inspect 8 Algorithms
-            <ArrowRight className="w-4 h-4" />
+            Inspect 9 Algorithms
+            <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs font-sans">
-          <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-1">
-            <span className="font-bold text-cyan-400">1. NASA 9 DONKI</span>
-            <p className="text-slate-400 text-[11px]">CME, FLR, GST, SEP, IPS, MPC, RBE, HSS, WSA-ENLIL — 120s parallel.</p>
-          </div>
-          <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-1">
-            <span className="font-bold text-amber-400">2. Scala 8 Algorithms</span>
-            <p className="text-slate-400 text-[11px]">Future fan-out, lat/lon, GOES tuple, Kp max, stats, 9-table persist, binning, theming.</p>
-          </div>
-          <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-1">
-            <span className="font-bold text-purple-400">3. SQLite 9 Tables</span>
-            <p className="text-slate-400 text-[11px]">11-col CME, flattened WSA, linked_events JSON, INSERT OR IGNORE.</p>
-          </div>
-          <div className="p-4 rounded-2xl bg-cyan-950/60 border border-cyan-800/60 space-y-1">
-            <span className="font-bold text-cyan-300">4. ECharts + Galaxy + ORBIT</span>
-            <p className="text-slate-400 text-[11px]">15+ charts • 6 palettes • live deep galaxy • ORBIT 9-table DB.</p>
+        {/* Numbered steps as translucent rows */}
+        <ol className="space-y-2.5">
+          {PIPELINE.map((s, i) => (
+            <li
+              key={s.n}
+              data-reveal="left"
+              style={{ '--reveal-delay': `${i * 90}ms` }}
+              className="sg-row group flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-8 py-5 px-5 sm:px-6"
+            >
+              <span className="font-mono text-xs text-slate-500 group-hover:text-cyan-400 transition-colors sm:w-10 sm:shrink-0">
+                {s.n}
+              </span>
+              <h3 className={`text-lg font-bold sm:w-52 sm:shrink-0 ${s.tint}`}>{s.title}</h3>
+              <p className="text-sm text-slate-400 leading-relaxed">{s.desc}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      {/* ================= CHARTS ================= */}
+      <section className="sg-panel p-8 sm:p-12 space-y-14">
+        <div data-reveal className="max-w-2xl space-y-4">
+          <span className="sg-chip">Visualisation</span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-white font-sans leading-tight">
+            Fifteen-plus charts, six palettes
+          </h2>
+          <p className="text-slate-400 text-sm leading-relaxed">
+            Every chart is palette-aware and reactive — change the theme in Settings and the
+            whole suite follows, including the bubble scatter and the stage-flow Sankey.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {CHARTS.map((c, i) => {
+            const Icon = c.icon;
+            return (
+              <div
+                key={c.title}
+                data-reveal="up"
+                style={{ '--reveal-delay': `${i * 90}ms` }}
+                className="sg-row sg-row-lift group p-5 space-y-3"
+              >
+                <Icon className={`w-5 h-5 ${c.tint} transition-transform duration-300 group-hover:scale-110`} />
+                <h3 className="sg-underline text-base font-bold text-white inline-block">{c.title}</h3>
+                <p className="text-sm text-slate-400 leading-relaxed">{c.desc}</p>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ================= NOAA SCALES ================= */}
+      <section className="sg-panel p-8 sm:p-12 space-y-14">
+        <div data-reveal className="max-w-2xl space-y-4">
+          <span className="sg-chip !border-amber-500/30 !bg-amber-950/50 !text-amber-200">Classification</span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-white font-sans leading-tight">
+            The official NOAA scales
+          </h2>
+          <p className="text-slate-400 text-sm leading-relaxed">
+            SpaceGuard derives the G-scale strictly from Kp — flare class and CME speed are
+            separate R and eruption metrics and never move the geomagnetic rating.
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          {SCALES.map((sc, i) => (
+            <div
+              key={sc.tag}
+              data-reveal="up"
+              style={{ '--reveal-delay': `${i * 80}ms` }}
+              className="sg-row group p-5 sm:p-6 space-y-4"
+            >
+              <div className="flex flex-wrap items-baseline gap-x-5 gap-y-2">
+                <span className={`text-4xl sm:text-5xl font-extrabold font-mono ${sc.tint}`}>{sc.tag}</span>
+                <span className="text-lg font-bold text-white">{sc.title}</span>
+                <span className="text-sm font-mono text-slate-500">{sc.range}</span>
+              </div>
+              {/* Intensity ramp — 1→5, widening and brightening */}
+              <div className="flex items-center gap-1.5 h-2">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <span
+                    key={n}
+                    className={`h-full rounded-full bg-gradient-to-r ${sc.bar} transition-all duration-500 group-hover:opacity-100`}
+                    style={{ width: `${10 + n * 9}%`, opacity: 0.35 + n * 0.13 }}
+                  />
+                ))}
+              </div>
+              <p className="text-sm text-slate-400 leading-relaxed max-w-3xl">{sc.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ================= CLOSING CTA ================= */}
+      <section className="sg-panel sg-panel-glow overflow-hidden p-8 sm:p-16 text-center">
+        <div className="sg-aurora bg-gradient-to-t from-cyan-500/20 via-violet-500/10 to-transparent" />
+        <div className="relative max-w-3xl mx-auto space-y-7">
+          <Rocket className="sg-float w-9 h-9 mx-auto text-cyan-400" />
+          <h2 data-reveal className="text-3xl sm:text-5xl font-extrabold text-white font-sans leading-tight">
+            Watch the Sun. <span className="sg-gradient-text">Know what's coming.</span>
+          </h2>
+          <p data-reveal style={{ '--reveal-delay': '100ms' }} className="text-slate-400 text-base leading-relaxed max-w-xl mx-auto">
+            Point SpaceGuard at any date range and it will pull nine feeds, cache them, and
+            hand you the story of what the Sun did.
+          </p>
+          <div data-reveal style={{ '--reveal-delay': '180ms' }} className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+            <button
+              onClick={() => setCurrentView('dashboard')}
+              className="group w-full sm:w-auto px-8 py-4 rounded-full bg-white text-slate-900 font-bold text-sm flex items-center justify-center gap-2 transition-all duration-300 hover:gap-3.5 hover:shadow-[0_0_40px_-8px_rgba(34,211,238,0.7)]"
+            >
+              <Database className="w-4 h-4" />
+              Open the Dashboard
+              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+            </button>
+            <button
+              onClick={() => setCurrentView('mission-control')}
+              className="w-full sm:w-auto px-8 py-4 rounded-full border border-slate-700 text-slate-300 font-semibold text-sm hover:border-cyan-500/60 hover:text-white transition-colors duration-300"
+            >
+              Mission Control
+            </button>
           </div>
         </div>
       </section>

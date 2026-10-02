@@ -1,5 +1,5 @@
 import React from 'react';
-import { Rocket, Database, FileText, Sliders } from 'lucide-react';
+import { Rocket, Database, FileText, Sliders, Radar, GitBranch } from 'lucide-react';
 
 export default function Header({ currentView, setCurrentView }) {
   return (
@@ -21,7 +21,7 @@ export default function Header({ currentView, setCurrentView }) {
                   Space<span className="text-cyan-400">Guard</span>
                 </span>
                 <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-cyan-950/80 text-cyan-300 font-semibold border border-cyan-700/60">
-                  v3.9
+                  v4.0
                 </span>
               </div>
               <p className="text-xs text-slate-400 font-medium">NASA DONKI Telemetry Platform</p>
@@ -43,6 +43,18 @@ export default function Header({ currentView, setCurrentView }) {
             </button>
 
             <button
+              onClick={() => setCurrentView('mission-control')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all duration-200 ${
+                currentView === 'mission-control'
+                  ? 'bg-cyan-600 text-white shadow-md shadow-cyan-500/20'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <Radar className="w-4 h-4" />
+              Mission Control
+            </button>
+
+            <button
               onClick={() => setCurrentView('dashboard')}
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all duration-200 ${
                 currentView === 'dashboard'
@@ -52,6 +64,18 @@ export default function Header({ currentView, setCurrentView }) {
             >
               <Database className="w-4 h-4" />
               Main Dashboard
+            </button>
+
+            <button
+              onClick={() => setCurrentView('timeline')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all duration-200 ${
+                currentView === 'timeline'
+                  ? 'bg-cyan-600 text-white shadow-md shadow-cyan-500/20'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <GitBranch className="w-4 h-4" />
+              Event Timeline
             </button>
 
             <button
@@ -78,7 +102,6 @@ export default function Header({ currentView, setCurrentView }) {
               Settings
             </button>
           </nav>
-
         </div>
       </div>
 
@@ -92,11 +115,25 @@ export default function Header({ currentView, setCurrentView }) {
           Overview
         </button>
         <button
+          onClick={() => setCurrentView('mission-control')}
+          className={`flex flex-col items-center gap-1 py-1 ${currentView === 'mission-control' ? 'text-cyan-400 font-bold' : 'text-slate-400'}`}
+        >
+          <Radar className="w-4 h-4" />
+          Mission
+        </button>
+        <button
           onClick={() => setCurrentView('dashboard')}
           className={`flex flex-col items-center gap-1 py-1 ${currentView === 'dashboard' ? 'text-cyan-400 font-bold' : 'text-slate-400'}`}
         >
           <Database className="w-4 h-4" />
           Dashboard
+        </button>
+        <button
+          onClick={() => setCurrentView('timeline')}
+          className={`flex flex-col items-center gap-1 py-1 ${currentView === 'timeline' ? 'text-cyan-400 font-bold' : 'text-slate-400'}`}
+        >
+          <GitBranch className="w-4 h-4" />
+          Timeline
         </button>
         <button
           onClick={() => setCurrentView('docs')}
@@ -109,7 +146,7 @@ export default function Header({ currentView, setCurrentView }) {
           onClick={() => setCurrentView('settings')}
           className={`flex flex-col items-center gap-1 py-1 ${currentView === 'settings' ? 'text-cyan-400 font-bold' : 'text-slate-400'}`}
         >
-          <Sliders className="w-4 h-4" />
+          <          Sliders className="w-4 h-4" />
           Settings
         </button>
       </div>

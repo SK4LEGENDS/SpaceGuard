@@ -16,7 +16,6 @@ const DEFAULT_PREFS = {
   fontScale: '100', // 90|100|110
   chartPalette: 'standard', // standard | ocean | ember | aurora | colorblind | monochrome
   timezone: 'UTC',
-  startupView: 'dashboard', // landing | dashboard
   autoRefresh: 'off', // off | 15m | 60m
   phenomenaVisibility: { geomagnetic: true, sep: true, rbe: true, 'cme-earth': true, flare: true, hss: true, ips: true, mpc: true }
 };
@@ -363,14 +362,9 @@ export default function SettingsPage({
 
               <div className="space-y-2">
                 <label className="flex items-center gap-2 font-semibold text-slate-300"><Layout className="w-3.5 h-3.5 text-purple-400" /> Startup View</label>
-                <select
-                  value={prefs.startupView}
-                  onChange={(e) => updatePrefs({ startupView: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-medium focus:outline-none focus:border-cyan-400"
-                >
-                  <option value="dashboard">Dashboard (default)</option>
-                  <option value="landing">Overview Landing</option>
-                </select>
+                <div className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-slate-400 text-xs font-medium">
+                  Always starts on the Overview Landing page
+                </div>
               </div>
 
               <div className="space-y-2">

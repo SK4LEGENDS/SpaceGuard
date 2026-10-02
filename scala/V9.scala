@@ -138,7 +138,7 @@ def fetchCME(
 ): List[CMEEvent] = {
 
     val url =
-        s"https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/CME?startDate=$startDate&endDate=$endDate"
+        s"https://ccmc.gsfc.nasa.gov/DONKI-API/get/CME?startDate=$startDate&endDate=$endDate"
 
     println("Fetching CME data...")
 
@@ -284,7 +284,7 @@ def fetchSolarFlares(
 ): List[SolarFlareEvent] = {
 
     val url =
-        s"https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/FLR?startDate=$startDate&endDate=$endDate"
+        s"https://ccmc.gsfc.nasa.gov/DONKI-API/get/FLR?startDate=$startDate&endDate=$endDate"
 
     println("Fetching Solar Flare data...")
 
@@ -355,7 +355,7 @@ def fetchStorms(
 ): List[GeomagneticStorm] = {
 
     val url =
-        s"https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/GST?startDate=$startDate&endDate=$endDate"
+        s"https://ccmc.gsfc.nasa.gov/DONKI-API/get/GST?startDate=$startDate&endDate=$endDate"
 
     println("Fetching Geomagnetic Storm data...")
 
@@ -419,7 +419,7 @@ def fetchSEP(
 ): List[SEPEvent] = {
 
     val url =
-        s"https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/SEP?startDate=$startDate&endDate=$endDate"
+        s"https://ccmc.gsfc.nasa.gov/DONKI-API/get/SEP?startDate=$startDate&endDate=$endDate"
 
     println("Fetching SEP data...")
 
@@ -465,7 +465,7 @@ def fetchIPS(
 ): List[IPSEvent] = {
 
     val url =
-        s"https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/IPS?startDate=$startDate&endDate=$endDate"
+        s"https://ccmc.gsfc.nasa.gov/DONKI-API/get/IPS?startDate=$startDate&endDate=$endDate"
 
     println("Fetching IPS data...")
 
@@ -517,7 +517,7 @@ def fetchMPC(
     startDate: String,
     endDate: String
 ): List[MPCEvent] = {
-    val url = s"https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/MPC?startDate=$startDate&endDate=$endDate"
+    val url = s"https://ccmc.gsfc.nasa.gov/DONKI-API/get/MPC?startDate=$startDate&endDate=$endDate"
     println("Fetching MPC data...")
     val json = getNASAData(url)
     val events = json.arr.map { mpc =>
@@ -535,7 +535,7 @@ def fetchRBE(
     startDate: String,
     endDate: String
 ): List[RBEEvent] = {
-    val url = s"https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/RBE?startDate=$startDate&endDate=$endDate"
+    val url = s"https://ccmc.gsfc.nasa.gov/DONKI-API/get/RBE?startDate=$startDate&endDate=$endDate"
     println("Fetching RBE data...")
     val json = getNASAData(url)
     val events = json.arr.map { rbe =>
@@ -553,7 +553,7 @@ def fetchHSS(
     startDate: String,
     endDate: String
 ): List[HSSEvent] = {
-    val url = s"https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/HSS?startDate=$startDate&endDate=$endDate"
+    val url = s"https://ccmc.gsfc.nasa.gov/DONKI-API/get/HSS?startDate=$startDate&endDate=$endDate"
     println("Fetching HSS data...")
     val json = getNASAData(url)
     val events = json.arr.map { hss =>
@@ -571,7 +571,7 @@ def fetchWSAEnlil(
     startDate: String,
     endDate: String
 ): List[WSAEnlilEvent] = {
-    val url = s"https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/WSAEnlilSimulations?startDate=$startDate&endDate=$endDate"
+    val url = s"https://ccmc.gsfc.nasa.gov/DONKI-API/get/WSAEnlilSimulations?startDate=$startDate&endDate=$endDate"
     println("Fetching WSA-Enlil data...")
     val json = getNASAData(url)
     val events = json.arr.flatMap { sim =>

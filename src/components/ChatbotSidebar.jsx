@@ -1,8 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Bot, Send, Sparkles, X, RotateCcw,
-  Zap, Sun, ShieldAlert, Activity, Compass, Database, Cpu, Sliders
+  Zap, Sun, ShieldAlert, Activity, Compass, Database, Cpu, Sliders, BarChart3, GitBranch, TrendingUp, Sigma, LineChart
 } from 'lucide-react';
+import {
+  buildMissionControlStatus, buildEventChains, buildTrends, buildCorrelations,
+  buildAnomalies, buildActivityBreakdown, getAnalysisBrief
+} from '../services/telemetryAnalysis';
+import {
+  resolveContext, runQuery, extractThreshold, routeViz,
+  buildFacts, FEEDS, LOW_CONFIDENCE
+} from '../services/orbitEngine';
 
 // ORBIT models — Updated Sep 2026: qwen/qwen3-8b:free is now paid-only (404).
 // Use resilient free router + stable gemma fallbacks via sequential retry.
@@ -40,18 +48,38 @@ export default function ChatbotSidebar({
   isOpen,
   setIsOpen,
   openRouterApiKey,
+  onNavigate,
 }) {
   const [messages, setMessages] = useState([
     {
       id: 'init-1',
       sender: 'bot',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      text: `👋 **Hello! I am ORBIT**, your solar telemetry copilot — with **full DB access**.\n\nI can assist you with:\n- 📊 **Live Status (9 feeds / 8 phenomena)** — CME, FLR, GST, SEP, IPS, **MPC, RBE, HSS, WSA-ENLIL**\n- ⚡ **6 Core Scala Algorithms**\n- 🪐 **Phenomena Details + Best Visualizations** (table-aware)\n- 🧲 **MPC / 🛰️ RBE / 💨 HSS / 🛰️ WSA Predictions**\n- 💾 **SQLite WASM DB — 9 tables, counts, sample rows ("list MPC", "fastest CME", "WSA arrivals")**\n- 👥 **Engineers (Kailash & SriViknesh)**\n\nAsk me anything — e.g., *"What is RBE?"*, *"list 3 HSS events"*, *"how many in DB?"*, *"WSA Earth arrivals?"*`
+      text: `👋 **Hello! I am ORBIT** — the intelligence layer of SpaceGuard.\n\nI read your live 9-feed window *and* the persisted 10-table database, then reason over the same analysis engine behind Mission Control and the Event Relationship Timeline. I don't just return rows — I calculate, compare, correlate and explain.\n\n- 🔎 **Ask in plain language** — *"how many CMEs faster than 1000?"*, *"average storm Kp"*, *"widest CME this week"*\n- 📊 **Real calculations** — count, average, median, min/max, spread and filtered subsets over any of the 9 feeds\n- 🔗 **Event correlation** — CME speed vs. peak Kp (Pearson r), flare→CME and SEP→parent rates, full stage chains\n- 📈 **Comparison & trends** — first vs. second half, activity share, velocity regression\n- 🚨 **Briefings** — threat assessment, hazard score, NOAA scales, anomaly watch list\n- 📊 **Visualization help** — ask *"show me the direction plot"* and I'll take you to the right tab\n- 🧠 **Conversational** — follow-ups like *"why?"* or *"tell me more"* keep the same subject\n- 🛡️ **Offline fallback** — works with no API key, using the local engine\n\nTry a quick prompt below, or ask *"how many CMEs above 1200 km/s?"*`
     }
   ]);
   const [inputVal, setInputVal] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const chatBottomRef = useRef(null);
+
+  // Last turn's classification, so follow-ups ("why?", "more") inherit the
+  // subject instead of falling through to the generic help message.
+  const lastIntentRef = useRef(null);
+
+  // ---- ORBIT data-awareness layer -----------------------------------------
+  // ORBIT reasons over derived analytics (status / chains / trends / correlations)
+  // instead of echoing raw arrays. Identical layer powers Mission Control + Timeline.
+  const analysis = useMemo(() => {
+    const safeData = data || {};
+    const status = buildMissionControlStatus(safeData, startDate, endDate);
+    const chains = buildEventChains(safeData, startDate, endDate);
+    const trends = buildTrends(safeData, startDate, endDate);
+    const correlations = buildCorrelations(safeData, chains);
+    const anomalies = buildAnomalies(safeData, chains);
+    const breakdown = buildActivityBreakdown(safeData);
+    const brief = getAnalysisBrief(safeData, startDate, endDate, { dataOrigin, sqliteCounts });
+    return { status, chains, trends, correlations, anomalies, breakdown, brief };
+  }, [data, startDate, endDate, dataOrigin, sqliteCounts]);
 
   // Auto scroll to bottom on new messages
   useEffect(() => {
@@ -60,7 +88,147 @@ export default function ChatbotSidebar({
     }
   }, [messages, isTyping, isOpen]);
 
-  // Local fallback intelligence engine (ORBIT) — now covers 9 DONKI feeds / 8 phenomena + DB
+  // =========================================================================
+  // ORBIT v2 — engine-driven handlers.
+  // These run BEFORE the legacy keyword chain below. Anything the engine
+  // handles confidently returns early; otherwise we defer to generateLocalResponse.
+  // =========================================================================
+
+  const fmtTime = (t) => (t && t !== 'N/A' ? String(t).slice(0, 16).replace('T', ' ') : '—');
+
+  /**
+   * Visualization assistance — resolves the query to a view + tab and, when a
+   * navigator was supplied, actually moves the user there. Returns a message.
+   */
+  const handleVizRequest = (query, feedKey) => {
+    const route = routeViz(query, feedKey);
+    if (!route) {
+      return `📊 I can take you to any view. Try:\n- *"show me the CME direction plot"* → CME Earth tab\n- *"open the stage flow"* → Event Relationship Timeline\n- *"mission control"* → threat briefing\n- *"engine specs"* → algorithms & theory\n\nOr name a feed: *"chart the RBE data"*.`;
+    }
+
+    const { view, tab, label, chart } = route;
+    let msg = `📊 **${label}**\n\nBest view for that: **${chart}**`;
+
+    if (onNavigate) {
+      onNavigate(view, tab);
+      msg += `\n\n✅ Taking you there now.`;
+    } else {
+      msg += `\n\n_(Open ORBIT from the Dashboard or Timeline to let me navigate for you.)_`;
+    }
+    return msg;
+  };
+
+  /**
+   * Structured data query — the capability the old engine could not do at all.
+   * Handles "how many X above N", "average X", "fastest X", "widest X" etc.
+   */
+  const handleDataQuery = (query, cls) => {
+    if (!hasQueried) {
+      return `⚠️ **Nothing loaded yet.**\n\nI query live telemetry, so I need a window first. The current range is \`${startDate}\` → \`${endDate}\` — set it and hit **"Query Live API"**, then ask me things like *"how many CMEs above 1000 km/s?"*.`;
+    }
+
+    // extractThreshold resolves both explicit comparators ("above 1000") and
+    // comparatives ("faster than 800"), the latter also yielding a metric.
+    const { comparator: cmp, threshold, metric: adjMetric } = extractThreshold(query);
+    const metric = cls.metric || adjMetric || null;
+    const operator = cmp || null;
+    const value = threshold ?? cls.number;
+
+    // Which feed? Use the one named, else infer from the metric.
+    let feedKey = cls.feed;
+    if (!feedKey) {
+      if (metric === 'maxKpIndex' || metric === 'kp90') feedKey = 'storms';
+      else if (metric === 'speed' || metric === 'halfAngle') feedKey = 'cmes';
+      else if (metric === 'latitude' || metric === 'longitude') feedKey = 'cmes';
+    }
+
+    if (!feedKey) {
+      const counts = FEEDS.map((f) => `${f.icon} ${f.label}: ${(data?.[f.arrKey] || []).length}`).join('  ·  ');
+      return `🔎 **Which feed do you mean?**\n\n${counts}\n\nTry *"how many CMEs above 1000 km/s?"*, *"average storm Kp"*, or *"fastest flare"*.`;
+    }
+
+    // Aggregate: max for "fastest/largest/widest/strongest", etc.
+    const l = query.toLowerCase();
+    let aggregate = 'count';
+    if (/average|mean|avg/.test(l)) aggregate = 'average';
+    else if (/median/.test(l)) aggregate = 'median';
+    else if (/fastest|highest|largest|biggest|strongest|maximum|most extreme|widest|newest|latest|most recent/.test(l)) aggregate = 'max';
+    else if (/slowest|lowest|smallest|weakest|minimum|narrowest|oldest/.test(l)) aggregate = 'min';
+    else if (/total|sum|combined/.test(l)) aggregate = 'sum';
+    else if (/top|list|show|first/.test(l)) aggregate = 'max';
+
+    // "fastest flare" has no numeric metric — rank by a sensible default.
+    let effectiveMetric = metric;
+    if (!effectiveMetric) {
+      if (feedKey === 'flares') effectiveMetric = null;
+      else if (feedKey === 'storms') effectiveMetric = 'maxKpIndex';
+      else if (feedKey === 'wes') effectiveMetric = 'speed';
+      else effectiveMetric = 'speed';
+    }
+
+    const res = runQuery(data, feedKey, {
+      metric: effectiveMetric,
+      comparator: operator,
+      threshold: value,
+      aggregate,
+      limit: 5
+    });
+
+    if (!res) return `⚠️ I couldn't run that — unknown feed \`${feedKey}\`.`;
+
+    const feed = res.feed;
+    const unit = res.unit;
+    const filterNote = res.applied.filter ? ` (${res.applied.filter})` : '';
+    const win = `\`${startDate}\`→\`${endDate}\``;
+
+    if (!res.matched) {
+      return `🔎 **No ${feed.plural} match** ${filterNote} in ${win}.\n\nThe window has **${res.total}** ${feed.plural} in total. Try relaxing the threshold — ask *"fastest ${feed.label}"* to see the top of the range.`;
+    }
+
+    // --- Scalar answer ------------------------------------------------------
+    if (aggregate === 'count' && !['top', 'list', 'show', 'first'].some((w) => l.includes(w))) {
+      const s = res.stats;
+      let extra = '';
+      if (s && effectiveMetric) {
+        extra = `\n\nAcross the ${s.n} matching event${s.n === 1 ? '' : 's'}, ${feed.numeric?.[effectiveMetric] ? effectiveMetric : 'the metric'} ranged **${Math.round(s.min)}–${Math.round(s.max)}${unit}** (mean **${Math.round(s.mean)}${unit}**, σ ${Math.round(s.stdDev)}).`;
+      }
+      const viz = routeViz('', feedKey);
+      return `🔎 **${res.matched} ${feed.plural}**${filterNote} out of ${res.total} in ${win}.${extra}\n\n_Best chart: ${viz?.chart || '—'}_`;
+    }
+
+    // --- Ranked / aggregate list -------------------------------------------
+    const head = aggregate === 'average' ? `**Average**` : aggregate === 'median' ? `**Median**` : aggregate === 'sum' ? `**Sum**` : aggregate === 'min' ? `**Lowest**` : `**Top**`;
+    const scalarLine = res.value != null
+      ? `${head} ${feed.label} ${effectiveMetric || ''} = **${res.value}${unit}**\n\n`
+      : '';
+
+    const list = res.rows.map((r, i) => {
+      const id = r[feed.idField] || 'N/A';
+      const val = effectiveMetric ? numericVal(r[effectiveMetric]) : null;
+      const time = fmtTime(r[feed.timeField]);
+      const valStr = val != null ? ` — **${val}${unit}**` : '';
+      return `${i + 1}. \`${id}\`${valStr} @ \`${time}\``;
+    }).join('\n');
+
+    const spread = res.stats
+      ? `\n\n**Distribution**: min **${Math.round(res.stats.min)}${unit}** · median **${Math.round(res.stats.median)}${unit}** · mean **${Math.round(res.stats.mean)}${unit}** · max **${Math.round(res.stats.max)}${unit}** · σ **${Math.round(res.stats.stdDev)}**`
+      : '';
+
+    const viz = routeViz('', feedKey);
+    const nav = onNavigate ? `\n\n_📊 Say "show me the chart" to open **${viz?.label}**._` : '';
+
+    return `${scalarLine}**${feed.icon} ${res.matched} of ${res.total} ${feed.plural}**${filterNote} in ${win}:\n\n${list}${spread}${nav}`;
+  };
+
+  const numericVal = (v) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? Math.round(n * 10) / 10 : null;
+  };
+
+  // =========================================================================
+  // Legacy keyword engine (unchanged) — handles explain/db/engine/team and the
+  // long-form narrative branches the engine doesn't cover.
+  // =========================================================================
   const generateLocalResponse = (rawQuery) => {
     const q = rawQuery.toLowerCase().trim();
 
@@ -75,6 +243,105 @@ export default function ChatbotSidebar({
     const totalHss = data.hss?.length || 0;
     const totalWes = data.wes?.length || 0;
     const db = sqliteCounts || {};
+
+    // 6.5 INTELLIGENT ANALYTICS — summaries, comparisons, trends, relationships
+    const { status: mc, chains, trends, correlations, anomalies, breakdown } = analysis;
+
+    const noData = () =>
+      `⚠️ **No Telemetry Analysed Yet**\n\nI need a queried window before I can analyse it. Set a range (currently \`${startDate}\` → \`${endDate}\`) and click **"Query Live API"**. Once loaded, ask me: *"summarise"*, *"what changed"*, *"how does X compare to Y"*, *"what caused the storm"* or *"any anomalies"*.`;
+
+    // 6.5a. Anomaly / watch list
+    if (q.includes('anomal') || q.includes('outlier') || q.includes('unusual') || q.includes('weird') || q.includes('watch list') || q.includes('standout')) {
+      if (!hasQueried) return noData();
+      if (!anomalies.length) return `✅ **No anomalies detected** in \`${startDate}→${endDate}\`.\n\nAll CME speeds sit within 2σ of the window mean, no storm reached Kp ≥ 7, and no X-class flares were recorded.`;
+      return `⚠️ **Anomalies & Watch List — ${anomalies.length} flagged** (${startDate}→${endDate})\n\n` +
+        anomalies.slice(0, 8).map((a, i) => {
+          const when = a.time ? ` @ \`${String(a.time).slice(0, 16).replace('T', ' ')}\`` : '';
+          return `${i + 1}. **\`${a.id}\`**${when} — ${a.note}`;
+        }).join('\n');
+    }
+
+    // 6.5b. Relationship / cause / why questions
+    if ((q.includes('caus') || q.includes('why') || q.includes('relat') || q.includes('connect') || q.includes('sequence') || q.includes('chain') || q.includes('trigger') || q.includes('led to') || q.includes('because of')) &&
+        !q.includes('g3') && !q.includes('g1') && !q.includes('g5')) {
+      if (!hasQueried) return noData();
+      if (!chains.length) return `🔗 **No multi-stage chains resolved** in this window.\n\nA chain needs at least two causally-linked events (e.g. a flare preceding a CME, or a shock followed by a storm). Open **Event Relationship Timeline** to inspect the reconstruction logic.`;
+      const full = chains.filter((c) => c.stages.length >= 3);
+      return `🔗 **Event Relationships — ${chains.length} chains reconstructed** (${full.length} spanning 3+ stages)\n\n` +
+        chains.slice(0, 5).map((c) => {
+          const path = c.nodes.filter((n) => !n.id.startsWith('mpc-')).map((n) => {
+            const stageName = { flare: 'Flare', cme: 'CME', wind: 'Wind', storm: 'Storm', radiation: 'Radiation' }[n.stage];
+            return `**${stageName}** \`${String(n.time || '—').slice(0, 16).replace('T', ' ')}\``;
+          }).join(' → ');
+          return `- \`${c.root}\` (confidence ${Math.round(c.confidence * 100)}%, span ${c.durationHours != null ? c.durationHours.toFixed(1) : '—'} h)\n  ${path}`;
+        }).join('\n') +
+        (correlations.length ? `\n\n**Measured associations**:\n` + correlations.map((c) => `- ${c.pair}: ${c.strength} ${c.direction} (r=${c.r.toFixed(2)}) — ${c.note}`).join('\n') : '');
+    }
+
+    // 6.5c. Trends / change over time
+    if (q.includes('trend') || q.includes('what changed') || q.includes('rising') || q.includes('falling') || q.includes('increase') || q.includes('decrease') || q.includes('over time') || q.includes('getting')) {
+      if (!hasQueried) return noData();
+      const lines = trends.rows.map((r) => {
+        const arrow = r.direction === 'rising' ? '▲ rising' : r.direction === 'falling' ? '▼ falling' : '— flat';
+        const pct = r.pctChange != null ? ` (${r.pctChange > 0 ? '+' : ''}${r.pctChange}%)` : '';
+        return `- **${r.label}**: ${r.first} → ${r.second} ${arrow}${pct}`;
+      });
+      const st = trends.speedTrend;
+      return `📈 **Trends — first vs second half of** \`${startDate}→${endDate}\` **(${trends.days} days)**\n\n` +
+        lines.join('\n') +
+        (st ? `\n\n**CME velocity distribution**\n- mean **${Math.round(st.mean)} km/s**, median **${Math.round(st.median)} km/s**, σ **${Math.round(st.stdDev)} km/s**\n- regression slope **${st.slopePerDay.toFixed(1)} km/s per day** (${st.slopePerDay > 0.5 ? 'accelerating' : st.slopePerDay < -0.5 ? 'decelerating' : 'stable'})` : '') +
+        `\n\nComposite hazard score: **${mc.overall.score}/100** (${mc.overall.label}).`;
+    }
+
+    // 6.5d. Comparisons (X vs Y, or most/least active)
+    if (q.includes('compare') || q.includes('comparison') || q.includes(' vs ') || q.includes('versus') || q.includes('which is more') || q.includes('most active') || q.includes('most common') || q.includes('difference between') || q.includes('share')) {
+      if (!hasQueried) return noData();
+      const sorted = [...breakdown].sort((a, b) => b.value - a.value);
+      const totalEvents = breakdown.reduce((s, b) => s + b.value, 0);
+      const top = sorted[0];
+      const least = sorted[sorted.length - 1];
+      const rising = trends.rows.filter((r) => r.direction === 'rising').sort((a, b) => b.delta - a.delta)[0];
+      const falling = trends.rows.filter((r) => r.direction === 'falling').sort((a, b) => a.delta - b.delta)[0];
+      return `⚖️ **Comparison — ${startDate}→${endDate}** (${totalEvents} total events)\n\n` +
+        `**Activity share by feed**:\n` +
+        sorted.map((b) => `- **${b.name}**: ${b.value} events (${b.share}%)`).join('\n') +
+        `\n\n**Head-to-head**\n- Most active feed: **${top.name}** (${top.value} events, ${top.share}%)\n- Least active feed: **${least.name}** (${least.value} events)\n- Biggest riser (2nd half vs 1st): **${rising ? rising.label : 'none'}** ${rising ? `(+${rising.delta})` : ''}\n- Biggest faller: **${falling ? falling.label : 'none'}** ${falling ? `(${falling.delta})` : ''}\n\n` +
+        `**Hazard comparison**\n- Eruption risk (CME ${mc.totals.cmes} events, peak ${mc.peakSpeed} km/s) vs geomagnetic risk (${mc.totals.storms} storms, max Kp ${mc.maxKp.toFixed(2)}, NOAA ${mc.gScale})\n- Radiation load: ${mc.totals.seps} SEP + ${mc.totals.rbes} RBE (NOAA ${mc.sScale})\n- Solar wind: ${mc.totals.hss} HSS + ${mc.totals.ipss} shocks + ${mc.totals.mpcs} MPC crossings`;
+    }
+
+    // 6.5e. Full analytical summary (default for "summarise/analys/brief")
+    if (q.includes('summar') || q.includes('analys') || q.includes('analyz') || q.includes('brief') || q.includes('report') || q.includes('situation') || q.includes('assess') || q.includes('mission control') || q.includes('overview')) {
+      if (!hasQueried) return noData();
+      return `🛰️ **ORBIT Telemetry Analysis — ${startDate}→${endDate}** (${mc.days} days)\n` +
+        `📡 Source: **${dataOrigin === 'cache' ? 'SQLite cache' : 'NASA DONKI live API'}**\n\n` +
+        `**Overall assessment**: ${mc.overall.label} — composite hazard **${mc.overall.score}/100**\n` +
+        `- NOAA **${mc.gScale}** (${mc.gLabel}) from max Kp **${mc.maxKp.toFixed(2)}**, avg Kp ${mc.avgKp.toFixed(2)}\n` +
+        `- Radio blackout **${mc.rScale}**, radiation storm **${mc.sScale}**\n\n` +
+        `**Indicator breakdown**\n` +
+        mc.indicators.map((i) => `- ${i.label}: **${i.value}** ${i.unit} — ${i.statusLabel} (risk ${i.level}/100, ${i.rate}/day). ${i.detail}`).join('\n') +
+        `\n\n**Relationships**: ${chains.length} causal chains reconstructed; ${chains.filter((c) => c.stages.length >= 4).length} fully resolve Flare → CME → Solar Wind → Storm.\n` +
+        (correlations.length ? correlations.slice(0, 3).map((c) => `- ${c.pair}: ${c.strength} ${c.direction} (r=${c.r.toFixed(2)})`).join('\n') : '') +
+        `\n\n**Trend**: ` +
+        (trends.rows.filter((r) => r.direction !== 'flat').length
+          ? trends.rows.filter((r) => r.direction !== 'flat').map((r) => `${r.label} ${r.direction} (${r.first}→${r.second})`).join(', ')
+          : 'activity is flat across the window') +
+        (anomalies.length ? `\n\n**Watch list**: ${anomalies.slice(0, 3).map((a) => `\`${a.id}\` ${a.value}`).join(' • ')}` : '');
+    }
+
+    // 6.5f. Follow-up to a specific CME / chain by name
+    const idMatch = rawQuery.match(/\b(20\d{2}-\d{2}-\d{2}T\d{6}|\d{4}-\d{2}-\d{2})\b/);
+    if (idMatch) {
+      const hit = chains.find((c) => (c.root || '').toLowerCase().includes(idMatch[1].toLowerCase()));
+      if (hit) {
+        return `🔎 **Chain trace for \`${hit.root}\`** (confidence ${Math.round(hit.confidence * 100)}%)\n\n` +
+          hit.nodes.filter((n) => !n.id.startsWith('mpc-')).map((n) => {
+            const stageName = { flare: 'Flare', cme: 'CME', wind: 'Solar Wind', storm: 'Storm', radiation: 'Radiation' }[n.stage];
+            return `- **${stageName}** @ \`${String(n.time || '—').slice(0, 16).replace('T', ' ')}\` → ${n.label}\n  ${n.detail}`;
+          }).join('\n') +
+          `\n\n${hit.summary} Full span: ${hit.durationHours != null ? `${hit.durationHours.toFixed(1)} h` : '—'}.`;
+      }
+    }
+
 
     // 0. DATABASE / SQLITE intent — explicit DB access
     if (q.includes('database') || q.includes('sqlite') || q.includes('sql.js') || q.includes('db count') || q.includes('how many in db') || q.includes('storage') || q.includes('cache') && (q.includes('how') || q.includes('count') || q.includes('stored'))) {
@@ -156,7 +423,6 @@ export default function ChatbotSidebar({
 
     // 3b. List / DB sample — direct data access (e.g., "list MPC", "fastest CME", "show WSA")
     if ((q.includes('list') || q.includes('show') || q.includes('top') || q.includes('fastest') || q.includes('largest') || q.includes('recent') || q.includes('example')) && (q.includes('cme') || q.includes('flare') || q.includes('flr') || q.includes('storm') || q.includes('gst') || q.includes('sep') || q.includes('ips') || q.includes('mpc') || q.includes('rbe') || q.includes('hss') || q.includes('wsa') || q.includes('enlil'))) {
-      const fmt = (arr, fields, n=3) => arr.slice(0,n).map((o,i)=> `${i+1}. \`${fields.map(f=>o[f]||'N/A').join('` | `')}\``).join('\n');
       if (q.includes('cme') && !q.includes('rbe') && !q.includes('hss')) {
         const sorted = [...(data.cmes||[])].sort((a,b)=>(b.speed||0)-(a.speed||0)).slice(0,3);
         if (!sorted.length) return `💥 **CME List** — No CMEs in \`${startDate}→${endDate}\` (live window). Try a stormier range or check DB totals: \`${db.cmes||0}\` CMEs persisted.`;
@@ -303,7 +569,7 @@ export default function ChatbotSidebar({
       return `👥 **SpaceGuard Engineering Team**:\n\n` +
         `1. **Kailash** — *Lead Data Engineer & Backend Architect*\n` +
         `   - Built the Scala 3 telemetry processing engine and parallel \`Future\` pipeline.\n` +
-        `   - Formulated the 6 core filtering and statistical algorithms.\n` +
+        `   - Formulated the 9 core filtering, statistical and rendering algorithms.\n` +
         `   - Engineered SQLite schema design and NASA API integrations.\n\n` +
         `2. **SriViknesh** — *Frontend Architect & Visualization Lead*\n` +
         `   - Designed the React 18 frontend architecture and state persistence.\n` +
@@ -311,17 +577,21 @@ export default function ChatbotSidebar({
         `   - Developed the dark cosmic UI design system and AI copilot interface.`;
     }
 
+
     // Default Fallback Response — now DB-aware
     const hintCounts = `Live window: CME ${totalCmes}, FLR ${totalFlares}, GST ${totalStorms}, SEP ${totalSeps}, IPS ${totalIpss}, MPC ${totalMpcs}, RBE ${totalRbes}, HSS ${totalHss}, WSA ${totalWes} | DB: ${db.cmes||0}/${db.flares||0}/${db.storms||0}/${db.seps||0}/${db.ipss||0}/${db.mpcs||0}/${db.rbes||0}/${db.hss||0}/${db.wes||0}`;
-    return `🛰️ **ORBIT Assistant** — I have full DB access.\n` +
+    return `🛰️ **ORBIT Assistant** — data-aware, with full DB access.\n` +
       `I received: *"${rawQuery}"*.\n\n` +
-      `Try these (all 8 phenomena + DB):\n` +
-      `- 📊 *"Summarize live telemetry"* — 9 feeds now\n` +
-      `- 🛰️ *"What is RBE / HSS / MPC / WSA-ENLIL?"* — deep dive per feed\n` +
-      `- 📈 *"Best visualization for geomagnetic storm?"* — table-aware\n` +
-      `- 💾 *"How many in DB?"* or *"list 3 MPC events"* / *"fastest CME"* / *"WSA Earth arrivals"* — I read from \`data\` + \`sqliteCounts\`\n` +
-      `- ⚡ *"Explain the 6 Scala algorithms"* | *"Difference CME vs Flare"* | *"Who built SpaceGuard?"*\n\n` +
-      `_Hint — ${hintCounts}_`;
+      `**Ask me analytical questions** (I read the telemetry, not just raw rows):\n` +
+      `- 📊 *"Summarise the situation"* — status + hazard score + trend\n` +
+      `- 📈 *"What are the trends?"* — first vs second half, CME velocity regression\n` +
+      `- ⚖️ *"Compare the feeds"* / *"which is most active?"* — share + head-to-head\n` +
+      `- 🔗 *"Why did the storm happen?"* / *"show event relationships"* — Flare → CME → Wind → Storm chains\n` +
+      `- ⚠️ *"Any anomalies?"* — outliers, Kp≥7 storms, X-class flares, full chains\n` +
+      `- 🪐 *"What is RBE / HSS / MPC / WSA-ENLIL?"* — deep dive per phenomenon\n` +
+      `- 💾 *"How many in DB?"* / *"list fastest CME"* — live \`data\` + \`sqliteCounts\`\n\n` +
+      `_Live: ${hintCounts}_\n` +
+      (hasQueried ? `_Derived: ${chains.length} chains, hazard ${mc.overall.score}/100, NOAA ${mc.gScale}_` : '_Query a date range to unlock analysis._');
   };
 
   // Dispatch query to OpenRouter or Local Engine
@@ -337,6 +607,35 @@ export default function ChatbotSidebar({
     setInputVal('');
     setIsTyping(true);
 
+    // ---- ORBIT engine gate -------------------------------------------------
+    // Classification, follow-up resolution and structured querying happen here,
+    // before any API call. Two reasons: (1) exact answers like "how many CMEs
+    // above 1200?" must not be at the mercy of a 700-token LLM sample, and
+    // (2) the engine is what makes ORBIT useful with no API key at all.
+    const cls = resolveContext(lastIntentRef.current, userText);
+    lastIntentRef.current = { intent: cls.intent, feed: cls.feed, metric: cls.metric, subject: userText };
+
+    const engineReply = (() => {
+      if (cls.intent === 'viz') return handleVizRequest(userText, cls.feed);
+      if (cls.intent === 'dataQuery' && cls.confidence >= LOW_CONFIDENCE) {
+        return handleDataQuery(userText, cls);
+      }
+      return null;
+    })();
+
+    if (engineReply) {
+      setTimeout(() => {
+        setMessages(prev => [...prev, {
+          id: `bot-${Date.now()}`,
+          sender: 'bot',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          text: engineReply
+        }]);
+        setIsTyping(false);
+      }, 260);
+      return;
+    }
+
     // If OpenRouter key is set, call live OpenRouter API (ORBIT) — with effective key + fallback
     const effectiveKey = getEffectiveOrbitKey(openRouterApiKey);
     // Debug aid — shows in console why fallback triggers
@@ -345,35 +644,40 @@ export default function ChatbotSidebar({
     }
     if (effectiveKey && effectiveKey.length > 10) {
       try {
-        const totalCmes = data.cmes?.length || 0;
-        const peakSpeed = totalCmes > 0 ? Math.max(...data.cmes.map(c => c.speed || 0)) : 0;
-        const totalMpcs = data.mpcs?.length || 0;
-        const totalRbes = data.rbes?.length || 0;
-        const totalHss = data.hss?.length || 0;
-        const totalWes = data.wes?.length || 0;
-        const db = sqliteCounts || {};
-        const systemPrompt = `You are ORBIT, an expert space weather astrophysicist and telemetry assistant for the SpaceGuard NASA DONKI platform. 
+        // Compact structured facts — the LLM reasons over these instead of
+        // re-deriving numbers, which keeps responses inside the token budget.
+        const facts = buildFacts({ data, analysis, sqliteCounts, startDate, endDate, dataOrigin });
+        const convo = lastIntentRef.current;
+        const systemPrompt = `You are ORBIT, the intelligence layer of SpaceGuard — an expert space weather astrophysicist and telemetry analyst.
 You were formerly called SpaceGuard AI — now you are ORBIT. Always identify as ORBIT.
-You have FULL DATABASE ACCESS via sql.js WASM (9 tables) — use sqliteCounts when asked about DB totals, and live data arrays when asked about current window.
 
-Current Live Telemetry State (use ONLY when user explicitly asks about current/live/summary/stats):
-- Date Range: ${startDate} to ${endDate}
-- Ingestion Source: ${dataOrigin === 'cache' ? 'SQLite WASM Browser Cache (0 API Calls)' : 'NASA DONKI Live REST API (9 feeds, parallel Future, 120s Await)'}
-- Threat Assessment: ${threatLevel?.level || 'Quiet'} (${threatLevel?.gScale || 'G0'})
-- Peak Planetary Kp: ${maxKp?.toFixed(2) || '0.00'}
-- Live window: CME ${totalCmes} (Peak ${peakSpeed} km/s, Earth-GB ${data.cmes?.filter(c=>c.isEarthGB)?.length||0}), Flares ${data.flares?.length||0}, GST ${data.storms?.length||0}, SEP ${data.seps?.length||0}, IPS ${data.ipss?.length||0}, MPC ${totalMpcs}, RBE ${totalRbes}, HSS ${totalHss}, WSA-ENLIL ${totalWes} (Earth-GB ${data.wes?.filter(w=>w.isEarthGB)?.length||0})
-- Persisted DB totals: CMEs ${db.cmes||0}, Flares ${db.flares||0}, Storms ${db.storms||0}, SEP ${db.seps||0}, IPS ${db.ipss||0}, MPC ${db.mpcs||0}, RBE ${db.rbes||0}, HSS ${db.hss||0}, WSA ${db.wes||0}, queries ${db.queries||0}
-Core Engine: Scala 3 (V9.scala) with 6 core algorithms + 9 DONKI feeds (CME/FLR/GST/SEP/IPS/MPC/RBE/HSS/WSAEnlilSimulations) (mention ONLY if user asks about algorithms/engine).
-Phenomena table (8): 🌍 Geomagnetic (CME+IPS+HSS+Kp+MPC), ☢️ SEP (FLR+CME+SEP), 🛰️ RBE (RBE+Kp+CME+HSS), ☄️ CME Earth (lat/lon+speed+width+WSA+FLR), ⚡ Flare (class+peak+AR), 💨 HSS (HSS+Kp+RBE), 🌊 IPS (arrival+wind change+CME link), 🧲 MPC (MPC+HSS+Kp).
-Best visualizations per table available — cite when asked.
+You are DATA-AWARE and CALCULATIONAL. You reason over the telemetry below rather than recalling generic space-weather text, and you perform real calculations and comparisons rather than hedging.
+
+TELEMETRY FACTS (authoritative — never contradict these, never invent numbers):
+${facts}
+
+${convo ? `CONVERSATION CONTEXT: the previous question was about "${convo.subject}". If this question is a follow-up ("why?", "more?"), keep that subject unless it clearly changes.\n` : ''}
+ENGINE: Scala 3 (V9.scala), 9 core algorithms, 9 DONKI feeds (CME/FLR/GST/SEP/IPS/MPC/RBE/HSS/WSAEnlilSimulations), 10-table SQLite via sql.js WASM (mention ONLY if asked about algorithms/engine).
+Phenomena (8): 🌍 Geomagnetic (CME+IPS+HSS+Kp+MPC), ☢️ SEP (FLR+CME+SEP), 🛰️ RBE (RBE+Kp+CME+HSS), ☄️ CME Earth (lat/lon+speed+width+WSA+FLR), ⚡ Flare (class+peak+AR), 💨 HSS (HSS+Kp+RBE), 🌊 IPS (arrival+wind change+CME link), 🧲 MPC (MPC+HSS+Kp).
+VISUALIZATION ROUTES: CME Earth/direction/scatter → tab "cme-earth"; Flare → "flare"; Geomagnetic/Kp → "geomagnetic"; SEP → "sep"; IPS → "ips"; RBE → "rbe"; HSS → "hss"; MPC → "mpc"; chains/causality → "timeline"; threat/briefing → "mission-control"; algorithms → "docs".
 Engineers: Kailash (Lead Data Engineer & Backend Architect) and SriViknesh (Frontend Architect & Visualization Lead).
-Threat rule (for “why G3/G1?”): NOAA G-scale is Kp-only: G1 Kp≥5, G2 Kp≥6, G3 Kp≥7, G4 Kp≥8, G5 Kp≥9. CME speed / M/X flares do NOT set G-scale — they are R-scale / eruption metrics.
+
+THREAT RULE (for "why G3/G1?"): NOAA G-scale is Kp-only: G1 Kp≥5, G2 Kp≥6, G3 Kp≥7, G4 Kp≥8, G5 Kp≥9. CME speed / M-X flares do NOT set G-scale — they are R-scale / eruption metrics. If Kp is 0.00, say Quiet/G0.
+
+The full pre-computed analytical brief (same layer behind Mission Control and the Event Relationship Timeline):
+${analysis.brief}
 
 STRICT STYLE RULES:
+- Answer in ORBIT's voice as an analyst, not a search engine. Lead with the answer, then evidence.
+- CALCULATE, don't guess. For counts, averages, extremes and comparisons use the numbers in TELEMETRY FACTS. If a figure isn't there, say so — never invent one.
+- For "how many X above N" style questions, state the filtered count and then give the range (min–max) so the answer has context.
+- When the user asks to see or open a chart, name the view from VISUALIZATION ROUTES and say you're taking them there.
 - For simple definitions like "what are CME Events?" give a SHORT answer: 2-4 sentences or 3-5 bullets, 80-120 words max. No tables. No live telemetry dump. No algorithm section. No impact tables unless asked.
-- Only include live telemetry numbers when user asks about current/live/summary/telemetry/status/counts/threat. Never dump all metrics unsolicited.
+- Only include live telemetry numbers when user asks about current/live/summary/telemetry/status/counts/threat/analysis. Never dump all metrics unsolicited.
+- For analytical questions (summarise / compare / trends / relationships / anomalies), lead with the conclusion in one sentence, then 3-5 bullets of supporting numbers drawn from the TELEMETRY FACTS. Cite derived figures (hazard score, chain confidence, r values, % changes) rather than restating every row.
+- Be honest about weak signal: if a correlation is weak or a window is sparse, say so rather than overstating it.
 - For “why G3?” etc: explain G-scale is from max Kp in GST data, not CME count/speed. If Kp is 0.00, say Quiet/G0 and note flare/CME are separate risks. Keep to 3-5 bullets, no truncation.
-- Only explain the 6 algorithms when user asks about algorithms/engine/processing.
+- Only explain the 9 algorithms when user asks about algorithms/engine/processing.
 - Keep markdown minimal: bold keywords, no full tables unless user requests a table.
 - Be direct and concise. Prefer 1 short paragraph + 3 bullets over long reports. Never stop mid-sentence.`;
 
@@ -497,6 +801,15 @@ STRICT STYLE RULES:
     handleQuery(promptQuery);
   };
 
+  const QUICK_PROMPTS = [
+    { icon: BarChart3, label: 'Briefing', q: 'Give me a space weather briefing' },
+    { icon: Sigma, label: 'Fast CMEs', q: 'How many CMEs are above 1000 km/s?' },
+    { icon: TrendingUp, label: 'Trends', q: 'What are the trends in this window?' },
+    { icon: GitBranch, label: 'Causes', q: 'Why did the geomagnetic activity happen?' },
+    { icon: Activity, label: 'Anomalies', q: 'Any anomalies worth watching?' },
+    { icon: LineChart, label: 'Show me', q: 'Show me the CME direction plot' }
+  ];
+
   const handleClearChat = () => {
     setMessages([
       {
@@ -554,7 +867,7 @@ STRICT STYLE RULES:
               <span>ORBIT</span>
               <Sparkles className="w-3 h-3 text-cyan-400" />
             </div>
-            <div className="text-[10px] text-slate-400 font-medium">Solar Telemetry Copilot</div>
+            <div className="text-[10px] text-slate-400 font-medium">Space Weather Intelligence</div>
           </div>
         </button>
       )}
@@ -580,7 +893,7 @@ STRICT STYLE RULES:
               <div>
                 <h3 className="font-sans font-bold text-xs sm:text-sm text-white">ORBIT</h3>
                 <p className="text-[10px] text-slate-400 font-medium">
-                  {getEffectiveOrbitKey(openRouterApiKey) ? `ORBIT · openrouter/free · OpenRouter` : 'ORBIT · Built-in Engine (no key)'}
+                  {getEffectiveOrbitKey(openRouterApiKey) ? 'Data-aware · openrouter/free' : 'Data-aware · Built-in Engine'}
                 </p>
               </div>
             </div>
@@ -656,13 +969,33 @@ STRICT STYLE RULES:
             <div ref={chatBottomRef} />
           </div>
 
+          {/* Quick analytical prompts */}
+          <div className="px-3 py-2 border-b border-slate-800/80 bg-slate-950/40 shrink-0">
+            <div className="flex items-center gap-1.5 overflow-x-auto">
+              {QUICK_PROMPTS.map((p) => {
+                const Icon = p.icon;
+                return (
+                  <button
+                    key={p.label}
+                    onClick={() => handleQuickPrompt(p.q)}
+                    disabled={isTyping}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-900/80 border border-slate-800 hover:border-cyan-500/50 hover:text-cyan-300 text-slate-300 text-[10px] font-semibold whitespace-nowrap transition-all disabled:opacity-40"
+                  >
+                    <Icon className="w-3 h-3" />
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Simple Input Bar */}
           <form onSubmit={handleSendMessage} className="p-3 border-t border-slate-800 bg-slate-900/90 flex items-center gap-2 shrink-0">
             <input
               type="text"
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value)}
-              placeholder="Ask about solar telemetry, algorithms..."
+              placeholder="Ask about trends, relationships, anomalies..."
               className="flex-1 px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-750 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400 focus:bg-slate-900 transition-all font-sans"
             />
             <button

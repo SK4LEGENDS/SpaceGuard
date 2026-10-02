@@ -96,6 +96,14 @@
   scroll-behavior: auto !important;
 }
 
+/* Reduced motion must not leave scroll-reveal content stranded at opacity 0 —
+   with the transition neutralised, force the revealed state so text is simply
+   present rather than flickering in. */
+[data-reduce-motion="1"] [data-reveal] {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
 /* GALAXY TOGGLE — data-galaxy-enabled="0" hides background */
 [data-galaxy-enabled="0"] .galaxy-bg {
   display: none !important;
@@ -139,4 +147,218 @@
   transform: translateY(-2px);
   box-shadow: 0 16px 36px -4px rgba(13, 148, 136, 0.25);
   border-color: rgba(45, 212, 191, 0.45);
+}
+
+/* ============================================================
+   LANDING PAGE — translucent section panels
+   Surfaces are applied at the SECTION level (and to list rows),
+   not to every leaf. This keeps the page from collapsing back
+   into the nested-box look while restoring colour + borders.
+   ============================================================ */
+
+/* Section-level glass panel. Softer radius + lighter fill than .clean-card so
+   the landing page stays flatter and less "cardy" than dashboard cards. */
+.sg-panel {
+  position: relative;
+  background:
+    linear-gradient(160deg, rgba(15, 23, 42, 0.72) 0%, rgba(8, 15, 30, 0.58) 55%, rgba(12, 20, 40, 0.66) 100%);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  border-radius: 1.5rem;
+  box-shadow:
+    0 18px 50px -12px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Top highlight edge — the classic glass "lit from above" seam. */
+.sg-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.55), rgba(167, 139, 250, 0.45), transparent);
+  pointer-events: none;
+}
+
+.sg-panel:hover {
+  border-color: rgba(34, 211, 238, 0.32);
+  box-shadow:
+    0 22px 60px -12px rgba(0, 0, 0, 0.7),
+    0 0 42px -18px rgba(34, 211, 238, 0.45),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Cyan-tinted variant for ORBIT and the closing CTA. */
+.sg-panel-glow {
+  border-color: rgba(34, 211, 238, 0.3);
+  background:
+    linear-gradient(160deg, rgba(8, 47, 73, 0.6) 0%, rgba(12, 20, 40, 0.55) 50%, rgba(49, 46, 129, 0.5) 100%);
+}
+
+.sg-panel-glow::before {
+  background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.8), rgba(167, 139, 250, 0.7), transparent);
+}
+
+/* List row inside a panel — translucent fill, hairline border, lifts on hover.
+   Replaces the previous fully-transparent rows. */
+.sg-row {
+  position: relative;
+  background: rgba(2, 6, 23, 0.42);
+  border: 1px solid rgba(51, 65, 85, 0.55);
+  border-radius: 0.875rem;
+  transition: all 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sg-row:hover {
+  background: rgba(14, 25, 48, 0.72);
+  border-color: rgba(34, 211, 238, 0.42);
+  transform: translateX(4px);
+  box-shadow: -3px 0 0 0 rgba(34, 211, 238, 0.85), 0 10px 28px -10px rgba(0, 0, 0, 0.6);
+}
+
+/* Grid variant — lifts straight up instead of sliding, for cells sitting in a
+   multi-column grid where a horizontal nudge would collide with neighbours. */
+.sg-row-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.25), 0 14px 32px -12px rgba(0, 0, 0, 0.7);
+}
+
+/* Small translucent chip for tags/badges (scale tags, eyebrows). */
+.sg-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background: rgba(8, 47, 73, 0.55);
+  border: 1px solid rgba(34, 211, 238, 0.3);
+  color: #a5f3fc;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Feed-ticker backing so the marquee reads as a lit strip, not floating text. */
+.sg-strip {
+  background: linear-gradient(90deg, rgba(8, 15, 30, 0.85), rgba(15, 23, 42, 0.65), rgba(8, 15, 30, 0.85));
+  border-top: 1px solid rgba(56, 189, 248, 0.2);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+  box-shadow: inset 0 0 40px -18px rgba(34, 211, 238, 0.5);
+}
+
+/* Scroll reveal — [data-reveal] starts hidden, .is-revealed plays the transition.
+   Elements without JS-driven reveal stay visible (progressive enhancement). */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+[data-reveal].is-revealed {
+  opacity: 1;
+  transform: none;
+}
+
+/* Gradient text that slowly shifts hue (hero + section headings) */
+@keyframes sg-hue {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+.sg-gradient-text {
+  background-image: linear-gradient(100deg, #22d3ee, #a78bfa, #34d399, #22d3ee);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: sg-hue 9s ease-in-out infinite;
+}
+
+/* Slow drifting aurora wash used behind hero + CTA bands */
+@keyframes sg-drift {
+  0%   { transform: translate3d(-6%, -4%, 0) scale(1); }
+  50%  { transform: translate3d(6%, 4%, 0) scale(1.15); }
+  100% { transform: translate3d(-6%, -4%, 0) scale(1); }
+}
+
+.sg-aurora {
+  position: absolute;
+  inset: -40%;
+  pointer-events: none;
+  filter: blur(90px);
+  opacity: 0.5;
+  animation: sg-drift 18s ease-in-out infinite;
+}
+
+/* Seamless marquee for the live DONKI feed ticker */
+@keyframes sg-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.sg-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: sg-marquee 42s linear infinite;
+}
+
+.sg-marquee:hover .sg-marquee-track {
+  animation-play-state: paused;
+}
+
+/* Gentle float for hero iconography */
+@keyframes sg-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+
+.sg-float {
+  animation: sg-float 6s ease-in-out infinite;
+}
+
+/* Radiating ring pulse — replaces the static "orbit ring" boxes */
+@keyframes sg-ping-ring {
+  0%   { transform: scale(0.85); opacity: 0.55; }
+  70%  { transform: scale(1.5);  opacity: 0; }
+  100% { transform: scale(1.5);  opacity: 0; }
+}
+
+.sg-ping-ring::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 1px solid rgba(34, 211, 238, 0.5);
+  animation: sg-ping-ring 3.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Expanding underline that draws in on hover (nav-ish list rows) */
+.sg-underline {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 1px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: background-size 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sg-underline:hover {
+  background-size: 100% 1px;
+}
+
+/* Numeric counters in the stats band */
+@keyframes sg-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.sg-rise {
+  animation: sg-rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
 }

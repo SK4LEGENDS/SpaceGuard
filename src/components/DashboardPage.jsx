@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import { fetchAllSpaceWeather, DEFAULT_START_DATE, DEFAULT_END_DATE } from '../services/donkiApi';
 import { saveToSQLite, getSQLiteCounts, exportSQLiteBinary, isDateRangeCached, getCachedTelemetry } from '../services/sqliteService';
-import ChatbotSidebar from './ChatbotSidebar';
 
 export default function DashboardPage({
   apiKey,
@@ -26,7 +25,10 @@ export default function DashboardPage({
   sqliteCounts: propSqliteCounts,
   setSqliteCounts: propSetSqliteCounts,
   openRouterApiKey,
-  setOpenRouterApiKey
+  setOpenRouterApiKey,
+  queryNonce = 0,
+  isOrbitOpen = false,
+  toggleOrbit
 }) {
   const [localStartDate, setLocalStartDate] = useState(DEFAULT_START_DATE);
   const [localEndDate, setLocalEndDate] = useState(DEFAULT_END_DATE);
@@ -116,8 +118,10 @@ export default function DashboardPage({
     } catch { return true; }
   };
 
-  // Collapsible AI Copilot — ORBIT
-  const [isChatOpen, setIsChatOpen] = useState(false);
+  // ORBIT is owned by App (single global instance) — `toggleOrbit` comes down
+  // as a prop. Fall back to local state only if used standalone.
+  const [localOrbitOpen, setIsChatOpen] = useState(false);
+  const isChatOpen = toggleOrbit ? isOrbitOpen : localOrbitOpen;
 
   const loadData = async (forceRefetch = false) => {
     if (!startDate || !endDate) {
@@ -168,6 +172,18 @@ export default function DashboardPage({
     e.preventDefault();
     loadData(false);
   };
+
+  // Cross-view query trigger (Mission Control / Event Relationship Timeline).
+  // Skips the very first render so mounting does not auto-fetch.
+  const firstNonceRef = React.useRef(true);
+  React.useEffect(() => {
+    if (firstNonceRef.current) {
+      firstNonceRef.current = false;
+      return;
+    }
+    loadData(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryNonce]);
 
   const handleForceRefetch = () => {
     loadData(true);
@@ -843,7 +859,7 @@ export default function DashboardPage({
   // CME direction 2D scatter: longitude vs latitude
   const getCmeDirectionScatterOption = () => {
     const points = (data.cmes || []).filter(c => c.latitude != null && c.longitude != null).map(c => ({
-      value: [c.longitude, c.latitude],
+      value: [c.longitude, c.latitude, c.speed],
       speed: c.speed,
       halfAngle: c.halfAngle,
       id: c.activityID
@@ -853,8 +869,8 @@ export default function DashboardPage({
         formatter: p => `${p.data.id}<br/>Lon: ${p.data.value[0]}°, Lat: ${p.data.value[1]}°<br/>Speed: ${p.data.speed} km/s<br/>Half-Angle: ${p.data.halfAngle}°`
       },
       grid: { left: '8%', right: '8%', bottom: '12%', top: '10%', containLabel: true },
-      xAxis: { type: 'value', name: 'Longitude (°)', min: -180, max: 180, axisLine: { lineStyle: { color: '#334155' } }, splitLine: { lineStyle: { color: 'rgba(51,65,85,0.3)' } } },
-      yAxis: { type: 'value', name: 'Latitude (°)', min: -90, max: 90, axisLine: { lineStyle: { color: '#334155' } }, splitLine: { lineStyle: { color: 'rgba(51,65,85,0.3)' } } },
+      xAxis: { type: 'value', name: 'Longitude (°)', nameLocation: 'middle', nameGap: 30, nameTextStyle: { color: '#cbd5e1', fontSize: 11 }, axisLabel: { color: '#94a3b8' }, min: -180, max: 180, axisLine: { lineStyle: { color: '#334155' } }, splitLine: { lineStyle: { color: 'rgba(51,65,85,0.3)' } } },
+      yAxis: { type: 'value', name: 'Latitude (°)', nameTextStyle: { color: '#cbd5e1', fontSize: 11 }, axisLabel: { color: '#94a3b8' }, min: -90, max: 90, axisLine: { lineStyle: { color: '#334155' } }, splitLine: { lineStyle: { color: 'rgba(51,65,85,0.3)' } } },
       visualMap: { min: 0, max: 2500, dimension: 2, show: false, inRange: { color: ['#5eead4', '#0d9488', '#f59e0b', '#ef4444'] } },
       series: [{
         type: 'scatter',
@@ -863,9 +879,9 @@ export default function DashboardPage({
           return Math.max(8, Math.min(28, ha * 0.6));
         },
         data: points.map(p => ({ value: p.value, speed: p.speed, halfAngle: p.halfAngle, id: p.id })),
-        itemStyle: { borderColor: '#0f172a', borderWidth: 1, opacity: 0.85 }
-      }],
-      markLine: { silent: true, data: [ { xAxis: 0 }, { yAxis: 0 }], lineStyle: { color: '#475569', type: 'dashed' } }
+        itemStyle: { borderColor: '#0f172a', borderWidth: 1, opacity: 0.85 },
+        markLine: { silent: true, symbol: 'none', data: [{ xAxis: 0 }, { yAxis: 0 }], lineStyle: { color: '#475569', type: 'dashed' } }
+      }]
     };
   };
 
@@ -974,21 +990,9 @@ export default function DashboardPage({
 
   return (
     <div className="space-y-8 py-6 relative">
-      {/* ORBIT — AI Space Weather Copilot (key managed via Settings → ORBIT) */}
-      <ChatbotSidebar
-        data={data}
-        startDate={startDate}
-        endDate={endDate}
-        hasQueried={hasQueried}
-        threatLevel={threatLevel}
-        maxKp={maxKp}
-        dataOrigin={dataOrigin}
-        sqliteCounts={sqliteCounts}
-        isOpen={isChatOpen}
-        setIsOpen={setIsChatOpen}
-        openRouterApiKey={openRouterApiKey}
-      />
-      
+      {/* ORBIT is mounted once at App level (so it is also available on Mission
+          Control / Event Timeline and keeps its state across navigation).
+          The button below only toggles that shared instance. */}
       {/* Title & Toolbar Row */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
@@ -1062,13 +1066,13 @@ export default function DashboardPage({
           </button>
 
           <button
-            onClick={() => setIsChatOpen(prev => !prev)}
+            onClick={() => (toggleOrbit ? toggleOrbit() : setIsChatOpen(prev => !prev))}
             className={`px-3.5 py-2.5 rounded-2xl border text-xs font-semibold flex items-center gap-1.5 shadow-card-sm transition-all ${
               isChatOpen 
                 ? 'bg-cyan-600 text-white border-cyan-600 shadow-md' 
                 : 'bg-slate-900/80 hover:bg-slate-950/70 border-slate-800 text-slate-200'
             }`}
-            title="Toggle ORBIT Copilot Sidebar"
+            title="Toggle ORBIT — data-aware space weather copilot"
           >
             <Bot className={`w-4 h-4 ${isChatOpen ? 'text-white' : 'text-cyan-400'}`} />
             <span>{isChatOpen ? 'Close ORBIT' : 'ORBIT'}</span>

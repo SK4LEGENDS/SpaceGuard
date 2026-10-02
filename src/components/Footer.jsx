@@ -1,5 +1,5 @@
 import React from 'react';
-import { Rocket, ShieldCheck, Terminal, ExternalLink, Cpu, Settings, BookOpen } from 'lucide-react';
+import { Rocket, ShieldCheck, Terminal, ExternalLink, Cpu, Settings, BookOpen, Radar, GitBranch } from 'lucide-react';
 
 export default function Footer({ setCurrentView }) {
   return (
@@ -57,6 +57,14 @@ export default function Footer({ setCurrentView }) {
                 <span>Dashboard — 8 Phenomena</span><ExternalLink className="w-3.5 h-3.5 opacity-60" />
               </button>
               <div className="grid grid-cols-2 gap-2">
+                <button onClick={() => setCurrentView('mission-control')} className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-cyan-500/50 text-slate-300 hover:text-cyan-300 transition-all">
+                  <Radar className="w-3.5 h-3.5" /> Mission Control
+                </button>
+                <button onClick={() => setCurrentView('timeline')} className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-cyan-500/50 text-slate-300 hover:text-cyan-300 transition-all">
+                  <GitBranch className="w-3.5 h-3.5" /> Timeline
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
                 <button onClick={() => setCurrentView('docs')} className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-cyan-500/50 text-slate-300 hover:text-cyan-300 transition-all">
                   <BookOpen className="w-3.5 h-3.5" /> Docs
                 </button>
@@ -64,7 +72,7 @@ export default function Footer({ setCurrentView }) {
                   <Settings className="w-3.5 h-3.5" /> Settings
                 </button>
               </div>
-              <a href="https://kauai.ccmc.gsfc.nasa.gov/DONKI/" target="_blank" rel="noreferrer" className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-cyan-500/50 text-slate-300 hover:text-cyan-300 transition-all">
+              <a href="https://ccmc.gsfc.nasa.gov/DONKI/" target="_blank" rel="noreferrer" className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-cyan-500/50 text-slate-300 hover:text-cyan-300 transition-all">
                 <span>NASA DONKI</span><ExternalLink className="w-3.5 h-3.5" />
               </a>
             </div>

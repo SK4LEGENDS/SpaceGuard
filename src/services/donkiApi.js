@@ -1,6 +1,13 @@
 /**
  * SpaceGuard NASA DONKI Live API Integration Service
- * Fetches real-time space weather telemetry directly from NASA Open Web Gateway across 9 endpoints:
+ *
+ * Base URL: the official CCMC DONKI public Data API.
+ * NOTE: the legacy hosts `api.nasa.gov/DONKI/*` and
+ * `kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/*` were retired on 2026-09-30 and now
+ * 301-redirect to a static news page with no CORS headers, which surfaces in the
+ * browser as a CORS failure rather than a 404. This endpoint needs no api_key.
+ *
+ * Fetches real-time space weather telemetry directly from NASA CCMC across 9 endpoints:
  * 1. CME (Coronal Mass Ejection) - cmeAnalyses + WSAEnlil
  * 2. FLR (Solar Flare)
  * 3. GST (Geomagnetic Storm) - Kp index time-series
@@ -12,7 +19,7 @@
  * 9. WSAEnlilSimulations (WSA-ENLIL heliospheric prediction)
  */
 
-const BASE_URL_NASA = 'https://api.nasa.gov/DONKI';
+const BASE_URL_NASA = 'https://ccmc.gsfc.nasa.gov/DONKI-API/get';
 
 // Helper to format date YYYY-MM-DD
 export function getFormattedDate(offsetDays = 0) {
@@ -26,7 +33,11 @@ export const DEFAULT_START_DATE = getFormattedDate(-30);
 export const DEFAULT_END_DATE = getFormattedDate(0);
 
 /**
- * Resolve effective NASA API Key from argument, env variable, or localStorage
+ * Resolve a NASA API key from argument, env variable, or localStorage.
+ *
+ * Legacy: the current DONKI public Data API is unauthenticated, so this key is
+ * no longer sent on the wire. It is retained so the Header / Settings key UI
+ * and the stored preference keep working without changes.
  */
 export function getEffectiveApiKey(userKey) {
   if (userKey && userKey !== 'DEMO_KEY') return userKey;
@@ -38,25 +49,76 @@ export function getEffectiveApiKey(userKey) {
 }
 
 /**
- * Generic fetch wrapper with error handling for NASA API Key limits
+ * Helper to generate date chunks to avoid NASA API 400 errors on large ranges.
+ * NASA API typically limits requests to ~30-60 days.
+ */
+function getDateChunks(startDate, endDate, chunkSizeDays = 30) {
+  const chunks = [];
+  let currentStart = new Date(startDate);
+  const finalEnd = new Date(endDate);
+
+  while (currentStart <= finalEnd) {
+    let currentEnd = new Date(currentStart);
+    currentEnd.setDate(currentEnd.getDate() + chunkSizeDays);
+    if (currentEnd > finalEnd) currentEnd = finalEnd;
+
+    chunks.push({
+      start: currentStart.toISOString().split('T')[0],
+      end: currentEnd.toISOString().split('T')[0]
+    });
+
+    currentStart = new Date(currentEnd);
+    currentStart.setDate(currentStart.getDate() + 1);
+  }
+  return chunks;
+}
+
+/**
+ * Generic fetch wrapper with automatic date chunking for large ranges.
  */
 async function fetchDonkiEndpoint(endpoint, startDate, endDate, apiKey) {
-  const keyToUse = getEffectiveApiKey(apiKey);
-  const url = `${BASE_URL_NASA}/${endpoint}?startDate=${startDate}&endDate=${endDate}&api_key=${keyToUse}`;
-  
-  const res = await fetch(url);
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const diffDays = (end - start) / (1000 * 60 * 60 * 24);
+
+  // If range is > 30 days, chunk it to prevent HTTP 400
+  if (diffDays > 30) {
+    const chunks = getDateChunks(startDate, endDate);
+    const chunkPromises = chunks.map(async (chunk) => {
+      const url = `${BASE_URL_NASA}/${endpoint}?startDate=${encodeURIComponent(chunk.start)}&endDate=${encodeURIComponent(chunk.end)}`;
+      const res = await fetch(url);
+      if (!res.ok) return [];
+      return res.json().catch(() => []);
+    });
+
+    const results = await Promise.all(chunkPromises);
+    const flatData = results.flat();
+    
+    if (!Array.isArray(flatData)) return [];
+    return flatData;
+  }
+
+  // Single request for small ranges
+  const url = `${BASE_URL_NASA}/${endpoint}?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
+  let res;
+  try {
+    res = await fetch(url);
+  } catch (err) {
+    throw new Error(`NASA DONKI ${endpoint} request failed (network/CORS): ${err.message}. Check connectivity to ${BASE_URL_NASA}.`);
+  }
+
   const data = await res.json().catch(() => null);
 
   if (!res.ok || (data && data.error)) {
     const errorObj = data && data.error ? data.error : {};
     const code = errorObj.code || `HTTP ${res.status}`;
     const msg = errorObj.message || res.statusText || 'NASA API Request Failed';
-    
-    if (code === 'OVER_RATE_LIMIT' || res.status === 429) {
-      throw new Error(`NASA API Key Rate Limit Exceeded (Active Key: ${keyToUse === 'DEMO_KEY' ? 'DEMO_KEY' : keyToUse.substring(0, 6) + '...'}). Please paste your valid NASA API Key in the Header (free from api.nasa.gov).`);
+
+    if (res.status === 429 || code === 'OVER_RATE_LIMIT') {
+      throw new Error(`NASA DONKI ${endpoint} rate limit exceeded (HTTP 429). Wait a moment and retry — the public API limits requests per minute.`);
     }
-    if (res.status === 403) {
-      throw new Error(`Invalid NASA API Key (${keyToUse}). Please check your key credentials.`);
+    if (res.status === 400) {
+      throw new Error(`NASA DONKI ${endpoint} rejected the date range ${startDate} → ${endDate} (HTTP 400). Start date must be on or before end date.`);
     }
     throw new Error(`NASA DONKI ${endpoint} API Error: ${msg} (${code})`);
   }
