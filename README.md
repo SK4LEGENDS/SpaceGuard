@@ -1,25 +1,76 @@
-# 🌌 SpaceGuard: NASA DONKI Space Weather Monitoring Platform
+# 🌌 SpaceGuard — NASA DONKI Telemetry & Space Weather Intelligence
 
-SpaceGuard is a high-precision telemetry platform designed to ingest, analyze, and visualize space weather data from NASA's **Database of Notifications, Knowledge, and Information (DONKI)**. It implements a symmetric asynchronous architecture, pairing a high-performance Scala 3 data engine with a reactive React 18 observability dashboard.
+<p align="center">
+  <img src="https://img.shields.io/badge/Vite-5.x-purple?logo=vitejs" />
+  <img src="https://img.shields.io/badge/React-18-blue?logo=react" />
+  <img src="https://img.shields.io/badge/Scala-3.3-red?logo=scala" />
+  <img src="https://img.shields.io/badge/Data-NASA%20DONKI-blue" />
+  <img src="https://img.shields.io/badge/Charts-Apache%20ECharts-orange" />
+  <img src="https://img.shields.io/badge/License-MIT-green" />
+</p>
 
-## 🚀 Key Features
+**SpaceGuard** is a professional space weather intelligence platform that transforms raw NASA DONKI telemetry into interactive visual analytics, event relationships, hazard insights, and AI-assisted exploration.
 
-### 🛰️ Data Engineering Pipeline
-- **9-Feed Parallel Ingestion**: Concurrent fetching of CME, FLR, GST, SEP, IPS, MPC, RBE, HSS, and WSA-ENLIL feeds.
-- **Temporal Chunking**: Automatic splitting of date ranges $>30$ days into sub-windows to prevent NASA API HTTP 400 rejections.
-- **Idempotent Persistence**: A 10-table SQLite schema utilizing `INSERT OR IGNORE` for ACID-compliant data storage.
-- **High-Throughput Parsing**: Leverages `uPickle` in Scala for zero-reflection JSON processing.
+---
 
-### 📊 Observability Dashboard
-- **Multi-Phenomena Analysis**: Visualizations for 8 distinct space weather phenomena.
-- **Advanced Charting**: 2D direction scatter plots (Lat/Lon), peak Kp area charts, and unified daily timelines via **Apache ECharts**.
-- **Immersive UI**: A glassmorphic design featuring a **Live Galaxy Canvas** (procedural stardust and nebula clouds) and custom theming palettes.
-- **WASM Mirroring**: Uses `sql.js` to maintain a browser-side mirror of the SQLite database for zero-latency filtering.
+## 🏗️ System Architecture
 
-### 🤖 ORBIT AI Intelligence Layer
-- **Hybrid Reasoning**: Combines a deterministic intent classifier with LLM augmentation (via OpenRouter).
-- **Natural Language Queries (NLQ)**: Convert plain-text questions into precise DB queries or visualization routes.
-- **Contextual Briefings**: Generates authoritative summaries based on real-time telemetry rather than recalled training data.
+SpaceGuard intentionally separates the **Scala data-engineering engine** from the **React dashboard**. Unlike traditional client-server apps, these are sibling processes designed for maximum data throughput and zero-latency UI.
+
+### 📉 Technical Flowchart
+```mermaid
+graph TD
+    User((User)) --> Dashboard[React Dashboard]
+    Dashboard --> Dates[Date Range Selection]
+    
+    Dates --> Cache{Cached Range?}
+    Cache -- Yes --> WASM[sql.js Browser SQLite]
+    Cache -- No --> API[NASA DONKI APIs]
+    
+    API --> Norm[Telemetry Normalization]
+    Norm --> WASM
+    
+    WASM --> Model[React Data Model]
+    Model --> Charts[Apache ECharts]
+    Model --> ORBIT[ORBIT AI Assistant]
+    
+    subgraph "Scala Data Engine (Backend)"
+        S_Engine[Scala Engineering Engine] --> S_API[NASA DONKI APIs]
+        S_API --> S_DB[(SQLite JDBC)]
+    end
+    
+    S_DB -.->|Optional Export/Sync| WASM
+```
+
+---
+
+## 🛠️ Core Systems Deep-Dive
+
+### 🛰️ How DONKI Integration Works
+The system integrates 9 distinct NASA feeds, mapping them into **8 Space Weather Phenomena**. 
+- **The Process**: The Scala Engine performs a parallel "Fan-Out" fetch $\rightarrow$ applies **Temporal Chunking** (splitting large ranges to avoid HTTP 400) $\rightarrow$ normalizes raw JSON into a strictly typed relational model.
+- **Phenomena Mapped**: 
+  - **CME & WSA-ENLIL**: Tracking plasma ejections and shock arrival.
+  - **Solar Flares**: Logarithmic intensity ranking (A $\rightarrow$ X class).
+  - **Geomagnetic Storms**: Kp-index reduction to derive NOAA G-Scale threats.
+  - **SEP, IPS, MPC, RBE, HSS**: High-energy particle and wind stream telemetry.
+
+### 🤖 The ORBIT Reasoning Engine
+ORBIT is not a simple chatbot; it is a **Hybrid Intelligence Layer** that follows a deterministic pipeline:
+
+1. **Classification**: Every query is scored against an 11-intent taxonomy (e.g., `viz`, `dataQuery`, `briefing`).
+2. **Deterministic Execution**: If the intent is `dataQuery` (e.g., "Fastest CME?"), ORBIT executes a real SQL-like filter on the telemetry. **0 API calls, 100% accuracy**.
+3. **Contextual Augmentation**: For complex questions, ORBIT builds a **Compact Fact Block** (summarizing current trends and anomalies) and injects it into an LLM via OpenRouter.
+4. **Route Visualization**: If the user asks to "see the flares," ORBIT triggers a `routeViz()` call that physically navigates the dashboard to the correct tab.
+
+### 🚀 Mission Control (The SITREP)
+**Mission Control** is the platform's high-level situational awareness hub. It provides a "SITREP" (Situation Report) by aggregating:
+- **Global Threat Score**: A calculated 0-100 score based on current solar activity.
+- **NOAA G-Scale**: Real-time classification of geomagnetic intensity.
+- **Anomaly Detection**: Flagging "Outlier" events that deviate from the window mean.
+- **Causal Chains**: Mapping the sequence: `Flare` $\rightarrow$ `CME` $\rightarrow$ `Solar Wind` $\rightarrow$ `Storm`.
+
+---
 
 ## 🛠️ Tech Stack
 
@@ -32,39 +83,18 @@ SpaceGuard is a high-precision telemetry platform designed to ingest, analyze, a
 | **Styling** | Tailwind CSS | Glassmorphic Design & Responsive Layout |
 | **AI/LLM** | OpenRouter / Gemma | NLQ & Contextual Intelligence |
 
-## 📐 System Architecture
-
-`NASA DONKI API` $\rightarrow$ `Scala Engine (Temporal Chunking)` $\rightarrow$ `SQLite (10 Tables)` $\rightarrow$ `React Frontend (sql.js Mirror)` $\rightarrow$ `ECharts Visualization`
-
 ## 🏃 Getting Started
 
 ### Backend (Scala)
-1. Ensure Java 17+ is installed.
-2. Run the compiled JAR:
-   ```bash
-   java --enable-native-access=ALL-UNNAMED -jar scala/spaceguard.jar 2026-01-01 2026-09-30
-   ```
+```bash
+java --enable-native-access=ALL-UNNAMED -jar scala/spaceguard.jar 2026-01-01 2026-09-30
+```
 
 ### Frontend (React)
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-2. Start the development server:
-   ```bash
-   npm run dev
-   ```
-
-## 📜 API Endpoints Integrated
-- **CME**: Coronal Mass Ejections
-- **FLR**: Solar Flares
-- **GST**: Geomagnetic Storms
-- **SEP**: Solar Energetic Particles
-- **IPS**: Interplanetary Shocks
-- **MPC**: Magnetopause Crossings
-- **RBE**: Radiation Belt Enhancements
-- **HSS**: High-Speed Streams
-- **WSA**: WSA-ENLIL Heliospheric Predictions
+```bash
+npm install
+npm run dev
+```
 
 ---
 **Developed by:** Kailash & SriViknesh  
