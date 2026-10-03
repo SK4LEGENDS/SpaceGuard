@@ -174,14 +174,11 @@ export default function DashboardPage({
   };
 
   // Cross-view query trigger (Mission Control / Event Relationship Timeline).
-  // Skips the very first render so mounting does not auto-fetch.
-  const firstNonceRef = React.useRef(true);
+  // Only trigger if queryNonce is greater than 0, preventing auto-fetch on mount.
   React.useEffect(() => {
-    if (firstNonceRef.current) {
-      firstNonceRef.current = false;
-      return;
+    if (queryNonce > 0) {
+      loadData(false);
     }
-    loadData(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryNonce]);
 

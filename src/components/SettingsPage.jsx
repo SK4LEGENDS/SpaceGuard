@@ -119,6 +119,25 @@ export default function SettingsPage({
     setTimeout(() => setCacheCleared(false), 3000);
   };
 
+  const [nukeSuccess, setNukeSuccess] = useState(false);
+  const handleNukeAll = async () => {
+    // Clear all stored API keys
+    localStorage.removeItem('nasa_donki_api_key');
+    localStorage.removeItem('openrouter_api_key');
+    // Clear all preferences
+    localStorage.removeItem('sg_prefs');
+    // Clear in-memory SQLite DB
+    await clearSQLiteCache();
+    // Reset React state
+    setInputKey('');
+    setApiKey('');
+    setInputOpenRouterKey('');
+    setOpenRouterApiKey('');
+    setPrefs(DEFAULT_PREFS);
+    setNukeSuccess(true);
+    setTimeout(() => setNukeSuccess(false), 4000);
+  };
+
   return (
     <div className="space-y-8 py-6 text-slate-100">
       
@@ -144,7 +163,45 @@ export default function SettingsPage({
       <div className="space-y-8">
         {/* Full-width stacked cards — no narrow sidebar, fills space */}
         <div className="space-y-8">
-          
+
+          {/* Danger Zone — Clear Everything */}
+          <div className="clean-card p-6 space-y-4 bg-rose-950/30 border border-rose-700/60">
+            <div className="flex items-center gap-3 border-b border-rose-800/50 pb-4">
+              <div className="p-2.5 rounded-2xl bg-rose-900/60 text-rose-400 border border-rose-700/50">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-white font-sans flex items-center gap-2">
+                  Clear All Data & API Keys
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-900/60 text-rose-300 border border-rose-700/60">DANGER ZONE</span>
+                </h2>
+                <p className="text-xs text-rose-300/70">
+                  Wipes NASA key, ORBIT key, all preferences, and the in-memory SQLite database in one click.
+                </p>
+              </div>
+            </div>
+
+            {nukeSuccess ? (
+              <div className="p-3 rounded-xl bg-emerald-950/80 border border-emerald-700/60 text-emerald-300 text-xs font-medium flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-400" />
+                All data cleared — API keys, preferences, and SQLite cache wiped successfully.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  This will remove: <code className="text-rose-300 font-mono">nasa_donki_api_key</code>, <code className="text-rose-300 font-mono">openrouter_api_key</code>, <code className="text-rose-300 font-mono">sg_prefs</code> from localStorage and clear all rows from the in-memory SQLite tables.
+                </p>
+                <button
+                  onClick={handleNukeAll}
+                  className="px-6 py-2.5 rounded-xl bg-rose-700 hover:bg-rose-600 text-white font-bold text-xs flex items-center gap-2 shadow-md shadow-rose-900/40 transition-all border border-rose-600/60"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Clear All Data & API Keys
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Card 1: OpenRouter AI Key Integration */}
           <div className="clean-card p-6 space-y-6 bg-slate-900/80 border border-slate-800 shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-800 pb-4">
