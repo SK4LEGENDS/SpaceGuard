@@ -1,1 +1,12 @@
 node_modules/
+dist/
+database/
+*.db
+.env
+.env.*
+!.env.example
+scala/.bsp/
+scala/.scala-build/
+
+# OS files
+.DS_Store

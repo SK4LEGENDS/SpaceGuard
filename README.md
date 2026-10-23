@@ -9,7 +9,7 @@
   <img src="https://img.shields.io/badge/License-MIT-green" />
 </p>
 
-**SpaceGuard** is a professional space weather intelligence platform that transforms raw NASA DONKI telemetry into interactive visual analytics, event relationships, hazard insights, and AI-assisted exploration.
+**SpaceGuard** is a professional space weather intelligence platform that transforms raw NASA DONKI telemetry into interactive visual analytics, event relationships, hazard insights, and **AI-assisted exploration powered by ORBIT**.
 
 ---
 
@@ -33,6 +33,7 @@ graph TD
     WASM --> Model[React Data Model]
     Model --> Charts[Apache ECharts]
     Model --> ORBIT[ORBIT AI Assistant]
+    ORBIT --> User((User))
     
     subgraph "Scala Data Engine (Backend)"
         S_Engine[Scala Engineering Engine] --> S_API[NASA DONKI APIs]
@@ -55,20 +56,30 @@ The system integrates 9 distinct NASA feeds, mapping them into **8 Space Weather
   - **Geomagnetic Storms**: Kp-index reduction to derive NOAA G-Scale threats.
   - **SEP, IPS, MPC, RBE, HSS**: High-energy particle and wind stream telemetry.
 
-### 🤖 The ORBIT Reasoning Engine
-ORBIT is not a simple chatbot; it is a **Hybrid Intelligence Layer** that follows a deterministic pipeline:
-
-1. **Classification**: Every query is scored against an 11-intent taxonomy (e.g., `viz`, `dataQuery`, `briefing`).
-2. **Deterministic Execution**: If the intent is `dataQuery` (e.g., "Fastest CME?"), ORBIT executes a real SQL-like filter on the telemetry. **0 API calls, 100% accuracy**.
-3. **Contextual Augmentation**: For complex questions, ORBIT builds a **Compact Fact Block** (summarizing current trends and anomalies) and injects it into an LLM via OpenRouter.
-4. **Route Visualization**: If the user asks to "see the flares," ORBIT triggers a `routeViz()` call that physically navigates the dashboard to the correct tab.
-
 ### 🚀 Mission Control (The SITREP)
 **Mission Control** is the platform's high-level situational awareness hub. It provides a "SITREP" (Situation Report) by aggregating:
 - **Global Threat Score**: A calculated 0-100 score based on current solar activity.
 - **NOAA G-Scale**: Real-time classification of geomagnetic intensity.
 - **Anomaly Detection**: Flagging "Outlier" events that deviate from the window mean.
 - **Causal Chains**: Mapping the sequence: `Flare` $\rightarrow$ `CME` $\rightarrow$ `Solar Wind` $\rightarrow$ `Storm`.
+
+---
+
+## 🤖 ORBIT Reasoning Engine
+
+ORBIT is the platform&apos;s **Hybrid Intelligence Layer** that bridges raw telemetry data with human understanding:
+
+### 🎯 Core Architecture
+1. **Intent Classification**: Every query is scored against an 11-intent taxonomy (`viz`, `dataQuery`, `briefing`, etc.)
+2. **Deterministic Execution**: For data queries like &quot;Fastest CME?&quot;, ORBIT executes exact SQL-like filters achieving **0 API calls, 100% accuracy**
+3. **Contextual Augmentation**: Complex questions trigger a **Compact Fact Block** generation, injecting current telemetry trends into LLMs via OpenRouter for grounded answers
+4. **Route Visualization**: User requests for visual exploration automatically trigger `routeViz()` to navigate the dashboard to the correct tab
+
+### 🚀 Advanced Capabilities
+- **Zero-Hallucination Answers**: Pure data queries execute deterministically without external API calls
+- **Contextual Intelligence**: Trend analysis and anomaly detection feed into LLM reasoning
+- **Seamless UI Integration**: Automatic dashboard navigation for visual exploration
+- **Multi-Intent Support**: Handles queries from simple facts to complex analytical briefings
 
 ---
 
